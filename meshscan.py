@@ -1,6 +1,10 @@
+'''!
+  TODO: Write this dockstring!
+'''
 
 VERBOSE = True 
 PRINTER_PORT = 'dev\ttyUSB0' #A reasonable default. 
+
 def send_serial(msg):
     """! Sends a string over serial to the printer. 
     This function connects to the robot, sends the specified string, and then 
@@ -14,10 +18,11 @@ def send_serial(msg):
     global VERBOSE
     global PRINTER_PORT
     if VERBOSE: print("sending: " + msg)
-    try:
     
-    except 
     
+def get_args():
+    print("managing command line args")
+
 def send_startup():
     print("startup")
     
@@ -40,6 +45,7 @@ def display_heat(data):
 
 
 if __name__ = "__main__":
+    get_args()
     send_startup()
     data = run_probing()
     send_shutdown()
