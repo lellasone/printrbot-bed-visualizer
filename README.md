@@ -14,7 +14,8 @@ worried it is failing.
 ### installation
 
 #### Visualizer script
-Clone the repo to a machine running ubuntu.   
+Clone the repo to a machine running ubuntu. It may also run under windows but
+I have never tried it. Feel free to start an issue if you run into trouble.  
 
 #### Dial Indicator
 The included STL is suitable for use with a shars dial dial indicator with a 
@@ -22,7 +23,8 @@ The included STL is suitable for use with a shars dial dial indicator with a
 although the corresponding M3 hardware may work with some persuasion. The part 
 is not settings sensative and can be printed with standard .8mm walls and 25% 
 infill. The included STL will print both halfs of the clamp in one print and
-they can then be pried appart with a knife. 
+they can then be pried appart with a knife.
+ 
 The mount is designed in solidworks and can be eddited in any solidworks more
 recent then 2017. You may also have some luck with onshape (which is free and 
 quite good) although I have not tried it for this particular part. 
