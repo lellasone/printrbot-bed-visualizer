@@ -159,18 +159,23 @@ def display_heat(data):
     smallest value. 
     @param data an n by n array of the z offsets to be displayed.
     """
+    global X_LIM
+    global Y_LIM
+    global SPACING
     print(data)
     data = np.array(data)
     mind = np.amin(data)
     data = data-mind
     a, ax = plt.subplots()
     im = ax.imshow(data)
-    ax.set_colorbar()
-    ax.ylabel("y position (mm)")
-    ax.xlabel("x position (mm)")
-    ax.xlabels(np.arange(0, X_LIM, SPACING))
-    ax.title("3D Printer Flatness Map (mm)")
-    ax.show()
+    #im.colorbar()
+    ax.set_ylabel("y position (mm)")
+    ax.set_xlabel("x position (mm)")
+    ax.set_xticks(np.arange(0, X_LIM, SPACING)/SPACING)
+    #ax.set_yticks(np.arange(0, Y_LIM, SPACING))
+    ax.set_yticklabels(np.arange(0, Y_LIM, SPACING))
+    ax.set_title("3D Printer Flatness Map (mm)")
+    plt.show()
     
 
 
