@@ -13,7 +13,8 @@ worried it is failing.
 
 ### installation
 
-
+#### Visualizer script
+Clone the repo to a machine running ubuntu.   
 
 #### Dial Indicator
 The included STL is suitable for use with a shars dial dial indicator with a 
@@ -28,7 +29,15 @@ quite good) although I have not tried it for this particular part.
 
 ### Usage
 
+Place your machine's startup g-code into the startup.txt file. This will be run
+prior to the scan. Note that the parser is not comment aware so the file needs
+to be composed of exactly one command per line with no comments and no blank
+lines. This step is very important because if your startup commands here do not
+match what you send from CURA (or the sender of your choice) then the results
+may not match what your printer experences in use. 
 
+Do the same thing for your machine's ending g-code. This won't impact the scan
+results, but you may find it convenient to have it home or zero after use. 
 
 
 ### Issues
