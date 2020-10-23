@@ -129,8 +129,7 @@ def move_delay(x, y, f, delay):
     @param delay how long to wait in seconds. 
     """ 
     send_serial("G90\n") #Set to absolute coordinates.
-    send_serial("G0  F{} X{} Y{}\n".format(f, x, y)) #move to position.
-    time.sleep(delay)
+    send_serial("G0  F{} X{} Y{}\n".format(f, x, y), delay) #move to position.
                                
 def run_probing(lim_x, lim_y, spacing):
     #TODO: Break out move com:mand to seperate function.
@@ -138,9 +137,8 @@ def run_probing(lim_x, lim_y, spacing):
     global FEED 
     if VERBOSE: print("run probing") 
     values = [] # Move to zero zero before starting.  
-    send_serial("G90\n") #Set to absolute coordinates.  
-    send_serial("G0  F1500 X5 Y5\n") 
-    time.sleep(10)
+    move_delay(0,0,120*np.sqrt(lim_x**2 + lim_y**2)/FEED)
+
     for i in range(0, lim_x, spacing):  
         row = []
         for j in range(0, lim_y, spacing):
@@ -165,22 +163,24 @@ def display_heat(data):
     data = np.array(data)
     mind = np.amin(data)
     data = data-mind
-    im = plt.imshow(data)
-    plt.colorbar()
-    plt.ylabel("y position (mm)")
-    plt.xlabel("x position (mm)")
-    plt.title("3D Printer Flatness Map (mm)")
-    plt.show()
+    a, ax = plt.subplots()
+    im = ax.imshow(data)
+    ax.set_colorbar()
+    ax.ylabel("y position (mm)")
+    ax.xlabel("x position (mm)")
+    ax.xlabels(np.arange(0, X_LIM, SPACING))
+    ax.title("3D Printer Flatness Map (mm)")
+    ax.show()
     
 
 
 
 if __name__ == "__main__":
     get_args()
-    send_file('startup.txt')
-    time.sleep(20)
-    data = run_probing(X_LIM, Y_LIM, SPACING)
-    send_file('shutdown.txt')
-    #data = [[0.5,0.5,0.5],[0.5,0.5,0.5],[0.1,0.2,0.5]]
+    #send_file('startup.txt')
+    #time.sleep(20)
+    #data = run_probing(X_LIM, Y_LIM, SPACING)
+    #send_file('shutdown.txt')
+    data = [[0.5,0.5,0.5],[0.5,0.5,0.5],[0.1,0.2,0.5]]
     display_heat(data)
     
