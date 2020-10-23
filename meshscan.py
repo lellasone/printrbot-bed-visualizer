@@ -10,7 +10,10 @@ import time
 VERBOSE = False 
 PRINTER_PORT = '/dev/ttyACM0' #A reasonable default. 
 BAUD_RATE = 250000
-
+X_LIM = 150 #default x size in pritner units (ussually mm)
+Y_LIM = 150 #default y size in printer units (ussually mm)
+SPACING = 25 #default distance between points. 
+FEED = 4000
 
 def send_serial(msg, delay = 0.01):
     """! Sends a string over serial to the printer. 
@@ -45,10 +48,15 @@ def send_serial(msg, delay = 0.01):
     
     
 def get_args():
+    #TODO: add exception handeling
     global VERBOSE
+    global BAUD_RATE
+    global X_LIM
+    global Y_LIM
+    global SPACING
     args = sys.argv[1:]
-    opts_short = "vp:b:"
-    opts_long = ["verbose","port=","baud="]
+    opts_short = "vp:b:x:y:s:"
+    opts_long = ["verbose","port=","baud=","x_limit=", "y_limit=","step="]
     opts, args = getopt.getopt(args,opts_short, opts_long)
     for opt, arg in opts:
         if opt in ("-v", "verbose"):
@@ -56,8 +64,14 @@ def get_args():
             print("Using verbose output mode")
         elif opt in ("-p", "port"):
             print("setting comport to: " + arg)
-        elif pot in ("-b", "baud="):
-            BAUD_RATE = args
+        elif opt in ("-b", "baud="):
+            BAUD_RATE = int(arg)
+        elif opt in ("-x", "x_limit="):
+            X_LIM = int(arg)
+        elif opt in ("-y", "y_limit="):
+            Y_LIM = int(arg)
+        elif opt in ("-s", "step="):
+            SPACING = int(arg)
     if VERBOSE: print(opts)
 
 def send_file(name):
@@ -76,7 +90,7 @@ def send_file(name):
     except IOError as e:
        print("ERROR READING FILE: " + str(e))
     
-def probe_location(x, y, f = 6000,  delay = 2):
+def probe_location(x, y, f = 4000,  delay = 2):
     """! Move the print head to the specified location and probe bed height.
     This function moves the print head to the specified location in absolute
     coordinates without altering the z-height. It then probes the bed height
@@ -98,18 +112,30 @@ def probe_location(x, y, f = 6000,  delay = 2):
         temp =  res.find(b'endstops') 
         res = res[temp:]
         val = float(res[res.find(b'Z:')+2:])
-        return(val)
-    else:
-        return(0) # Not a great default, but there you go. 
+        return(val) 
+    else: 
+        return(0) # Not a great default, but there you go.  
 
-     
 def run_probing(lim_x, lim_y, spacing):
-    print("run probing")
-    values = [] 
+    #TODO: Break out move command to seperate function.
+    global VERBOSE 
+    global FEED 
+    if VERBOSE: print("run probing") 
+    values = [] # Move to zero zero before starting.  
+    send_serial("G90\n") #Set to absolute coordinates.  
+    send_serial("G0  F1500 X5 Y5\n") 
+    time.sleep(10)
     for i in range(0, lim_x, spacing):  
         row = []
         for j in range(0, lim_y, spacing):
-            row.append(probe_location(lim_x, lim_y)
+            # Set the move delay based on expected travel distance
+            if j == 0: 
+                delay = 120*lim_y/FEED
+            else:
+                delay = 120*spacing/FEED  
+            # actual do the probing
+            row.append(probe_location(i, j, f = FEED, delay = delay))
+            
         values.append(row)
     print(values) 
 
@@ -127,7 +153,7 @@ if __name__ == "__main__":
     get_args()
     send_file('startup.txt')
     time.sleep(20)
-    data = run_probing()
+    data = run_probing(X_LIM, Y_LIM, SPACING)
     send_file('shutdown.txt')
     display_heat(data)
     
