@@ -33,9 +33,7 @@ def send_serial(msg, delay = 0.01):
     try: 
         ser = serial.Serial(PRINTER_PORT,timeout=1)
         ser.write(bytes(msg, 'ascii'))
-        print("test")
         time.sleep(delay) #some commands may take seconds to execute.
-        print("test")
         resp = ser.read(100)
         worked = True
     except serial.SerialException as e:
@@ -61,28 +59,52 @@ def get_args():
             BAUD_RATE = args
     if VERBOSE: print(opts)
 
-def send_startup():
-    """! Send the commands in the 'startup.txt' file.
-    This function sends a block of gCode prior to executing the main loop and 
-    without processing the replies. It is meant for testing various
-    configurations of the startup GCode option in CURA.
-    
-    It should be called exactly once prior to begining main loop. 
+def send_file(name):
+    """! Send the commands in the specified file.
+    This function sends a block of g-code without delay between commands. This 
+    is useful for things like sending startup or shutdown commands but may not
+    be suitable for more complex tasks like sending actual operatinal code. 
+
+    @param name the name of the file to send.  
     """
-    start = open('startup.txt')
-    for line in start:
-        send_serial(line)
+    try:
+        start = open(name)
+        for line in start:
+            send_serial(line)
+        start.close()
+    except IOError as e:
+       print("ERROR READING FILE: " + str(e))
     
-    print("startup")
-    
+def probe_location(x, y, f = 6000,  delay = 2):
+    """! Move the print head to the specified location and probe bed height.
+    This function moves the print head to the specified location in absolute
+    coordinates without altering the z-height. It then probes the bed height
+    and returns that value. 
+
+    The default move delay is suitable for medium-length moves, but may need
+    to be extended for large printer beds. 
+    @param x absolute axis location. 
+    @param y absolute axis location. 
+    @param f in printer units (ussually mm/m)
+    @returns z height at which bed was detected.
+    """
+    send_serial("G90\n") #Set to absolute coordinates.
+    send_serial("G0  F{} X{} Y{}\n".format(f, x, y)) #move to position.
+    time.sleep(delay)
+    # Find the z offset.
+    res, error = send_serial("G30\n", 1)
+    if error:
+        temp =  res.find(b'endstops') 
+        res = res[temp:]
+        val = float(res[res.find(b'Z:')+2:])
+        return(val)
+    else:
+        return
+
+     
 def run_probing():
-    print("run probing")
-    
-def send_shutdown():
-    """! send the specified end-of-program g-code. 
-    """
-    print("disconnect")
-    
+    print("run probing") 
+    print(probe_location(50,50))
 def display_heat(data):
     """! Geneates and displays a heat map of the bed's height data.
     The map will be displayed with the G30 values set relative to the
@@ -95,8 +117,9 @@ def display_heat(data):
 
 if __name__ == "__main__":
     get_args()
-    send_startup()
+    send_file('startup.txt')
+    time.sleep(20)
     data = run_probing()
-    send_shutdown()
+    send_file('shutdown.txt')
     display_heat(data)
     

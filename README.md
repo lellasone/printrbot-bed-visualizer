@@ -41,6 +41,8 @@ may not match what your printer experences in use.
 Do the same thing for your machine's ending g-code. This won't impact the scan
 results, but you may find it convenient to have it home or zero after use. 
 
+if either of these files takes longer then ~20s to execute you may need to
+tweak that in code. (It's unlikely though)
 
 ### Issues
 If you run into problems using this code, or need help adapting it to another 
