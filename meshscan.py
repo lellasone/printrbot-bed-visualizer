@@ -1,5 +1,6 @@
 '''!
   TODO: Write this dockstring!
+  TODO: Intelegent transit delay times?
 '''
 import sys
 import getopt
@@ -99,12 +100,19 @@ def probe_location(x, y, f = 6000,  delay = 2):
         val = float(res[res.find(b'Z:')+2:])
         return(val)
     else:
-        return
+        return(0) # Not a great default, but there you go. 
 
      
-def run_probing():
-    print("run probing") 
-    print(probe_location(50,50))
+def run_probing(lim_x, lim_y, spacing):
+    print("run probing")
+    values = [] 
+    for i in range(0, lim_x, spacing):  
+        row = []
+        for j in range(0, lim_y, spacing):
+            row.append(probe_location(lim_x, lim_y)
+        values.append(row)
+    print(values) 
+
 def display_heat(data):
     """! Geneates and displays a heat map of the bed's height data.
     The map will be displayed with the G30 values set relative to the
