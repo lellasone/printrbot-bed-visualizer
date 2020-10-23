@@ -6,6 +6,10 @@ import sys
 import getopt
 import serial
 import time
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+
 
 VERBOSE = False 
 PRINTER_PORT = '/dev/ttyACM0' #A reasonable default. 
@@ -103,10 +107,8 @@ def probe_location(x, y, f = 4000,  delay = 2):
     @param f in printer units (ussually mm/m)
     @returns z height at which bed was detected.
     """
-    send_serial("G90\n") #Set to absolute coordinates.
-    send_serial("G0  F{} X{} Y{}\n".format(f, x, y)) #move to position.
-    time.sleep(delay)
-    # Find the z offset.
+    move_delay(x, y, f, delay)
+        # Find the z offset.
     res, error = send_serial("G30\n", 1)
     if error:
         temp =  res.find(b'endstops') 
@@ -116,8 +118,22 @@ def probe_location(x, y, f = 4000,  delay = 2):
     else: 
         return(0) # Not a great default, but there you go.  
 
+def move_delay(x, y, f, delay):
+    """! Makes an absolute move to a position and then waits the delay.
+    This function wrapps a G0 command with a delay command. It is useful
+    for general purpose moves. A G90 command is used to set the coordinates
+    to absolute prior to execution. 
+    @param x float indicating desired location. 
+    @param y float indicating desired location.
+    @param f feedrate (ussually in mm/m)
+    @param delay how long to wait in seconds. 
+    """ 
+    send_serial("G90\n") #Set to absolute coordinates.
+    send_serial("G0  F{} X{} Y{}\n".format(f, x, y)) #move to position.
+    time.sleep(delay)
+                               
 def run_probing(lim_x, lim_y, spacing):
-    #TODO: Break out move command to seperate function.
+    #TODO: Break out move com:mand to seperate function.
     global VERBOSE 
     global FEED 
     if VERBOSE: print("run probing") 
@@ -137,7 +153,7 @@ def run_probing(lim_x, lim_y, spacing):
             row.append(probe_location(i, j, f = FEED, delay = delay))
             
         values.append(row)
-    print(values) 
+    return(values)
 
 def display_heat(data):
     """! Geneates and displays a heat map of the bed's height data.
@@ -145,7 +161,17 @@ def display_heat(data):
     smallest value. 
     @param data an n by n array of the z offsets to be displayed.
     """
-    print("display heat")
+    print(data)
+    data = np.array(data)
+    mind = np.amin(data)
+    data = data-mind
+    im = plt.imshow(data)
+    plt.colorbar()
+    plt.ylabel("y position (mm)")
+    plt.xlabel("x position (mm)")
+    plt.title("3D Printer Flatness Map (mm)")
+    plt.show()
+    
 
 
 
@@ -155,5 +181,6 @@ if __name__ == "__main__":
     time.sleep(20)
     data = run_probing(X_LIM, Y_LIM, SPACING)
     send_file('shutdown.txt')
+    #data = [[0.5,0.5,0.5],[0.5,0.5,0.5],[0.1,0.2,0.5]]
     display_heat(data)
     
