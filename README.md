@@ -17,7 +17,7 @@ worried it is failing.
 Clone the repo to a machine running ubuntu. It may also run under windows but
 I have never tried it. Feel free to start an issue if you run into trouble.  
 
-#### Dial Indicator
+#### Dial indicator
 The included STL is suitable for use with a shars dial dial indicator with a 
 3/8 shoulder. The screws are 4-40x5/8 and the knuts are .24in edge to edge,
 although the corresponding M3 hardware may work with some persuasion. The part 
@@ -31,6 +31,7 @@ quite good) although I have not tried it for this particular part.
 
 ### Usage
 
+#### Start and end files 
 Place your machine's startup g-code into the startup.txt file. This will be run
 prior to the scan. Note that the parser is not comment aware so the file needs
 to be composed of exactly one command per line with no comments and no blank
