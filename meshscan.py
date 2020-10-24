@@ -1,6 +1,20 @@
-'''!
-  TODO: Write this dockstring!
-  TODO: Intelegent transit delay times?
+'''! 
+    This script repeatedly height-probes a 3D printer's bed and generates a
+    heat map of how far each probe height is from the lowest probe point found. 
+    The script will repeatedly release and re-aquire ownership of the commport,
+    so this most likely will not work with programs like cura running.
+      
+    The default settings are largely suitable for a printerbot simple metal,
+    but the script should work for most printers with a height probe given the
+    proper arguments.   
+
+    args:
+        -v, verbose:  sets the script to output more internal details. 
+        -b, baud=:    sets the serial buad rate. 
+        -p, port=:    sets the comport. 
+        -x, x_limit=: how large an area in x to probe over. 
+        -y, y_limit=: how large an area in y to probe over. 
+        -s, step=:    how far in each axis to move between probings. 
 '''
 import sys
 import getopt
