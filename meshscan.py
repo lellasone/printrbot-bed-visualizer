@@ -52,6 +52,7 @@ def send_serial(msg, delay = 0.01):
     
     
 def get_args():
+
     #TODO: add exception handeling
     global VERBOSE
     global BAUD_RATE
@@ -137,7 +138,7 @@ def run_probing(lim_x, lim_y, spacing):
     global FEED 
     if VERBOSE: print("run probing") 
     values = [] # Move to zero zero before starting.  
-    move_delay(0,0,120*np.sqrt(lim_x**2 + lim_y**2)/FEED)
+    move_delay(0,0,FEED,120*np.sqrt(lim_x**2 + lim_y**2)/FEED)
 
     for i in range(0, lim_x, spacing):  
         row = []
@@ -159,22 +160,39 @@ def display_heat(data):
     smallest value. 
     @param data an n by n array of the z offsets to be displayed.
     """
-    global X_LIM
+    
     global Y_LIM
     global SPACING
+    global X_LIM
     print(data)
+    # Lets condition the data
     data = np.array(data)
     mind = np.amin(data)
-    data = data-mind
+    data = data-mind # set our lowest value to zero
+    data = np.flipud(data) # set y axis to match most printers
+    
+    # msc matplot lib stuff 
     a, ax = plt.subplots()
     im = ax.imshow(data)
-    #im.colorbar()
+
+    #label each square
+    for i in range (data.shape[0]):
+        for j in range(data.shape[1]):
+            ax.text(j, i, np.round(data[i, j],2),
+                    ha="center", va="center", color="b")
+
+     
+    # Lets set up the axis labels 
+    x_lim = X_LIM # Fixes a variable not defined issue. Why? Who knows...
+    ax.set_yticks(range(0, int(Y_LIM/SPACING)))
+    ax.set_yticklabels(np.flipud(np.arange(0, Y_LIM, SPACING))+SPACING/2)   
+    ax.set_xticks(range(0, int(x_lim /SPACING)))
+    ax.set_xticklabels(np.arange(0, x_lim, SPACING)+SPACING/2)
+
+    plt.colorbar(im, ax = ax) 
+    ax.set_title("3D Printer Flatness Map (mm)")
     ax.set_ylabel("y position (mm)")
     ax.set_xlabel("x position (mm)")
-    ax.set_xticks(np.arange(0, X_LIM, SPACING)/SPACING)
-    #ax.set_yticks(np.arange(0, Y_LIM, SPACING))
-    ax.set_yticklabels(np.arange(0, Y_LIM, SPACING))
-    ax.set_title("3D Printer Flatness Map (mm)")
     plt.show()
     
 
@@ -182,10 +200,10 @@ def display_heat(data):
 
 if __name__ == "__main__":
     get_args()
-    #send_file('startup.txt')
-    #time.sleep(20)
-    #data = run_probing(X_LIM, Y_LIM, SPACING)
-    #send_file('shutdown.txt')
-    data = [[0.5,0.5,0.5],[0.5,0.5,0.5],[0.1,0.2,0.5]]
+    send_file('startup.txt')
+    time.sleep(20)
+    data = run_probing(X_LIM, Y_LIM, SPACING)
+    send_file('shutdown.txt')
+    #data = [[0.1,0.5,0.5],[0.5,0.5,0.5],[0.5,0.5,0.5]]
     display_heat(data)
     
