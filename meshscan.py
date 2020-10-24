@@ -108,12 +108,18 @@ def send_file(name):
     is useful for things like sending startup or shutdown commands but may not
     be suitable for more complex tasks like sending actual operatinal code. 
 
+    It's a tossup whether this catches comments and blank space correctly.
+
     @param name the name of the file to send.  
     """
     try:
         start = open(name)
         for line in start:
-            send_serial(line)
+            # Handle comments (sorta)
+            send = line[:line.find(';')]
+            if send[-1] != '\n':  send = send + "\n"
+            # Send the data. 
+            send_serial(send)
         start.close()
     except IOError as e:
        print("ERROR READING FILE: " + str(e))
@@ -184,7 +190,7 @@ def run_probing(lim_x, lim_y, spacing):
             
             percent = (i*lim_x + j*spacing)/((lim_x)*(lim_y))*100
             if VERBOSE: 
-                print("completion percentage: " + str(round(percent, 1)))
+                print("completion percentage: " + str(round(percent, 1)) + "%")
         values.append(row)
     return(values)
 

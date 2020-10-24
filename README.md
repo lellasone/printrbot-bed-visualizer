@@ -39,19 +39,24 @@ quite good) although I have not tried it for this particular part.
 |Parameter                     | Default | Description |
 | :----------------------------|:--------|:------------|
 | -v, verbose                  | False   | prints out extra info|
+| -b, baud                     | 250000  | baud rate for serial |
+| -p, port                     | /dev/ttyACM0 | Comport that printer is on |
+| -x, x_limit                  | 150     | size of area to scan in mm |
+| -y, y_limit                  | 150     | size of area to scan in mm |
+| -s, step                     
 
 #### Start and end files 
 Place your machine's startup g-code into the startup.txt file. This will be run
-prior to the scan. Note that the parser is not comment aware so the file needs
-to be composed of exactly one command per line with no comments and no blank
-lines. This step is very important because if your startup commands here do not
-match what you send from CURA (or the sender of your choice) then the results
-may not match what your printer experences in use. 
+prior to the scan. Use this to run any commands (say homing or bed leveing) run
+prior to printing. If you are copying over code from cura's printer settings
+take care to REMOVE any that relate to the extruder. 
 
 Do the same thing for your machine's ending g-code. This won't impact the scan
 results, but you may find it convenient to have it home or zero after use. 
 
-if either of these files takes longer then ~20s to execute you may need to
+The comment handeling is very much an afterthought so if you run into trouble 
+consider removing all of the comments from your startup and shutdown scripts.
+Also, if either of these files takes longer then ~20s to execute you may need to
 tweak that in code. (It's unlikely though)
 
 ### Issues

@@ -1,1 +1,7 @@
-G28
+M104 S0     ;extruder heater off
+M140 S0     ;heated bed heater off (if you have it)
+M106 S0     ;fan off
+G91         ;relative positioning
+G28 X0 Y0   ;home X/Y, so the head is out of the way
+M84         ;steppers off
+G90         ;absolute positioning
