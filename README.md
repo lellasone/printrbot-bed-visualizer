@@ -24,7 +24,11 @@ Clone the repo to a machine running windows.
 Clone the repo to a machine running ubuntu. It may also run under windows but
 I have never tried it. Feel free to start an issue if you run into trouble.  
 
-use pip3 to install matplotlib, numpy, and pyserial
+```
+pip3 install matplotlib
+pip3 install numpy
+pip3 install pyserial
+```
  
 #### Dial indicator
 The included STL is suitable for use with a shars dial dial indicator with a 
@@ -50,16 +54,16 @@ python3 meshscan.py -v -x 150 -y 150 -s 10
 ```
 
 __Run as a windows executable__
-'''
+```
 #TODO: put something reasonable here
-'''
+```
 
 Unless your system is very similar to mine you may need to change the port and 
 baud rate arguments. The baud rate is a product of the firmware installed on 
 your printer, and the comport is a product of the order in which devices are
 connected to your computer. Both can be found in your g-code sender. A good
 default comport for ubuntu is '/dev/ttyACM0' and a good default guess for 
-windows is 'COM0'
+windows is 'COM0'.
 
 #### Command Line Arguments
 
