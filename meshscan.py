@@ -52,8 +52,10 @@ def send_serial(msg, delay = 0.01):
     
     
 def get_args():
-
-    #TODO: add exception handeling
+    """! This function reads in and processes the command line arguments. 
+    Does what it says on the tin. If you are planning to use command line args
+    then this should be called first so the various globals can be set. 
+    """
     global VERBOSE
     global BAUD_RATE
     global X_LIM
@@ -62,23 +64,30 @@ def get_args():
     args = sys.argv[1:]
     opts_short = "vp:b:x:y:s:"
     opts_long = ["verbose","port=","baud=","x_limit=", "y_limit=","step="]
-    opts, args = getopt.getopt(args,opts_short, opts_long)
-    for opt, arg in opts:
-        if opt in ("-v", "verbose"):
-            VERBOSE = True
-            print("Using verbose output mode")
-        elif opt in ("-p", "port"):
-            print("setting comport to: " + arg)
-        elif opt in ("-b", "baud="):
-            BAUD_RATE = int(arg)
-        elif opt in ("-x", "x_limit="):
-            X_LIM = int(arg)
-        elif opt in ("-y", "y_limit="):
-            Y_LIM = int(arg)
-        elif opt in ("-s", "step="):
-            SPACING = int(arg)
-    if VERBOSE: print(opts)
+    try: 
+        opts, args = getopt.getopt(args,opts_short, opts_long)
+        for opt, arg in opts:
+            if opt in ("-v", "verbose"):
+                VERBOSE = True
+                print("Using verbose output mode")
+            elif opt in ("-p", "port"):
+                print("setting comport to: " + arg)
+            elif opt in ("-b", "baud="):
+                BAUD_RATE = int(arg)
+            elif opt in ("-x", "x_limit="):
+                X_LIM = int(arg)
+            elif opt in ("-y", "y_limit="):
+                Y_LIM = int(arg)
+            elif opt in ("-s", "step="):
+                SPACING = int(arg)
+        if VERBOSE: print(opts)
 
+    except getopt.GetoptError as e:
+        print("Argument Error: " + str(e))
+        print("valid arguments include: " + str(opts_long))
+        print("!!!exiting program now!!!")
+        quit()
+    
 def send_file(name):
     """! Send the commands in the specified file.
     This function sends a block of g-code without delay between commands. This 
