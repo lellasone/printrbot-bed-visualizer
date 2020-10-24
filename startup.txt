@@ -4,4 +4,3 @@ M82       ;set extruder to absolute mode
 M107      ;start with the fan off
 G28 X0 Y0 ;home X/Y
 G28 Z0    ;home Z
-G29       ;initiate auto bed leveling sequence
