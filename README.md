@@ -13,7 +13,9 @@ worried it is failing.
 
 ### installation
 
-#### Visualizer script
+#### Executable Install
+
+#### Full Install
 Clone the repo to a machine running ubuntu. It may also run under windows but
 I have never tried it. Feel free to start an issue if you run into trouble.  
 
@@ -30,6 +32,13 @@ recent then 2017. You may also have some luck with onshape (which is free and
 quite good) although I have not tried it for this particular part. 
 
 ### Usage
+
+#### Command Line Arguments
+
+
+|Parameter                     | Default | Description |
+| :----------------------------|:--------|:------------|
+| -v, verbose                  | False   | prints out extra info|
 
 #### Start and end files 
 Place your machine's startup g-code into the startup.txt file. This will be run
