@@ -42,11 +42,13 @@ quite good) although I have not tried it for this particular part.
 
 After completing the installation (above) the script can be run from the 
 command line as follows. Your arguments (below) may be different depending on 
-what exactly you want to do.  
+what exactly you want to do. 
+ 
 __Run as a python script__
-'''
+```
 python3 meshscan.py -v -x 150 -y 150 -s 10 
-'''
+```
+
 __Run as a windows executable__
 '''
 #TODO: put something reasonable here
@@ -66,7 +68,7 @@ windows is 'COM0'
 | :----------------------------|:--------|:------------|
 | -v, verbose                  | False   | prints out extra info.|
 | -b, baud                     | 250000  | baud rate for serial transmission. (firmware specific)|
-| -p, port                     | /dev/ttyACM0 | Comport that printer is on. (you can get this from your g-code sender, or from dmesg on ubuntu|
+| -p, port                     | /dev/ttyACM0 | COMPORT to use for communicating with the printer.|
 | -x, x_limit                  | 150     | size of area to scan in mm. |
 | -y, y_limit                  | 150     | size of area to scan in mm. |
 | -s, step                     | 25      | linear spacing along each axis between probe locations in mm. 
