@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-
+# global params, many of these are also set by get_args()
 VERBOSE = False 
 PRINTER_PORT = '/dev/ttyACM0' #A reasonable default. 
 BAUD_RATE = 250000
@@ -142,7 +142,14 @@ def move_delay(x, y, f, delay):
     send_serial("G0  F{} X{} Y{}\n".format(f, x, y), delay) #move to position.
                                
 def run_probing(lim_x, lim_y, spacing):
-    #TODO: Break out move com:mand to seperate function.
+    """! Main testing loop of the program, this executes probes each location.
+    Executes a printer height probe at each location specified by the operating
+    area and spacing paramiter. 
+    @param lim_y y dimension of the area to test. 
+    @param lim_x x dimension of the area to test. 
+    @param seperation along each axis of probe locations.
+    @returns array containing the read z value at each test location. 
+    """ 
     global VERBOSE 
     global FEED 
     if VERBOSE: print("run probing") 
@@ -168,8 +175,7 @@ def display_heat(data):
     The map will be displayed with the G30 values set relative to the
     smallest value. 
     @param data an n by n array of the z offsets to be displayed.
-    """
-    
+    """ 
     global Y_LIM
     global SPACING
     global X_LIM
