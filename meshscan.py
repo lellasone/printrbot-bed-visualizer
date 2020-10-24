@@ -75,6 +75,7 @@ def get_args():
     global X_LIM
     global Y_LIM
     global SPACING
+    global PRINTER_PORT
     args = sys.argv[1:]
     opts_short = "vp:b:x:y:s:"
     opts_long = ["verbose","port=","baud=","x_limit=", "y_limit=","step="]
@@ -85,7 +86,7 @@ def get_args():
                 VERBOSE = True
                 print("Using verbose output mode")
             elif opt in ("-p", "port"):
-                print("setting comport to: " + arg)
+                PRINTER_PORT = arg 
             elif opt in ("-b", "baud="):
                 BAUD_RATE = int(arg)
             elif opt in ("-x", "x_limit="):
