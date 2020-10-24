@@ -1,13 +1,13 @@
 # Printerbot Bed Visualizer
 
+![Image of script output](/pics/with_bed_leveling.png)
+
 A python script for visualizing the surface geometry of a printerbot's bed using
 the onboard capacitive sensor. It will most likely also work for plenty of other
 printers provided you tweak the settings a bit. 
 
 Also included is a simple fixture for mounting a dial indicator to the 
-capacitive sensor. 
-
-Note: I found the onboard capacitive sensor to be
+capacitive sensor. However, I found the onboard capacitive sensor to be
 repeatable to within +- 0.25 thou, so I would stick with that unless you are 
 worried it is failing. 
 
@@ -18,11 +18,13 @@ work as an executable under windows as well.
 
 
 #### Executable Install (windows)
-Clone the repo to a machine running windows. 
+Clone the repo to a machine running windows. You can do this by clicking on the 
+green "Code" button in the upper right-hand side of this screen. 
 
 #### Full Install (ubuntu)
 Clone the repo to a machine running ubuntu. It may also run under windows but
-I have never tried it. Feel free to start an issue if you run into trouble.  
+I have never tried it. Feel free to start an issue if you run into trouble. 
+Then install the dependencies below.  
 
 ```
 pip3 install matplotlib
