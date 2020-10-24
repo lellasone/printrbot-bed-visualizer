@@ -12,13 +12,20 @@ repeatable to within +- 0.25 thou, so I would stick with that unless you are
 worried it is failing. 
 
 ### installation
+I use ubuntu and have only somewhat tested the executable under windows. I
+recommend running the script as a python script under ubuntu, but it should
+work as an executable under windows as well.
 
-#### Executable Install
 
-#### Full Install
+#### Executable Install (windows)
+Clone the repo to a machine running windows. 
+
+#### Full Install (ubuntu)
 Clone the repo to a machine running ubuntu. It may also run under windows but
 I have never tried it. Feel free to start an issue if you run into trouble.  
 
+use pip3 to install matplotlib, numpy, and pyserial
+ 
 #### Dial indicator
 The included STL is suitable for use with a shars dial dial indicator with a 
 3/8 shoulder. The screws are 4-40x5/8 and the knuts are .24in edge to edge,
@@ -33,17 +40,36 @@ quite good) although I have not tried it for this particular part.
 
 ### Usage
 
+After completing the installation (above) the script can be run from the 
+command line as follows. Your arguments (below) may be different depending on 
+what exactly you want to do.  
+__Run as a python script__
+'''
+python3 meshscan.py -v -x 150 -y 150 -s 10 
+'''
+__Run as a windows executable__
+'''
+#TODO: put something reasonable here
+'''
+
+Unless your system is very similar to mine you may need to change the port and 
+baud rate arguments. The baud rate is a product of the firmware installed on 
+your printer, and the comport is a product of the order in which devices are
+connected to your computer. Both can be found in your g-code sender. A good
+default comport for ubuntu is '/dev/ttyACM0' and a good default guess for 
+windows is 'COM0'
+
 #### Command Line Arguments
 
 
 |Parameter                     | Default | Description |
 | :----------------------------|:--------|:------------|
-| -v, verbose                  | False   | prints out extra info|
-| -b, baud                     | 250000  | baud rate for serial |
-| -p, port                     | /dev/ttyACM0 | Comport that printer is on |
-| -x, x_limit                  | 150     | size of area to scan in mm |
-| -y, y_limit                  | 150     | size of area to scan in mm |
-| -s, step                     
+| -v, verbose                  | False   | prints out extra info.|
+| -b, baud                     | 250000  | baud rate for serial transmission. (firmware specific)|
+| -p, port                     | /dev/ttyACM0 | Comport that printer is on. (you can get this from your g-code sender, or from dmesg on ubuntu|
+| -x, x_limit                  | 150     | size of area to scan in mm. |
+| -y, y_limit                  | 150     | size of area to scan in mm. |
+| -s, step                     | 25      | linear spacing along each axis between probe locations in mm. 
 
 #### Start and end files 
 Place your machine's startup g-code into the startup.txt file. This will be run
