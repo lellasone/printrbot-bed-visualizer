@@ -166,7 +166,8 @@ def run_probing(lim_x, lim_y, spacing):
     """ 
     global VERBOSE 
     global FEED 
-    if VERBOSE: print("run probing") 
+    if VERBOSE: print("run probing")
+     
     values = [] # Move to zero zero before starting.  
     move_delay(0,0,FEED,120*np.sqrt(lim_x**2 + lim_y**2)/FEED)
 
@@ -181,6 +182,9 @@ def run_probing(lim_x, lim_y, spacing):
             # actual do the probing
             row.append(probe_location(i, j, f = FEED, delay = delay))
             
+            percent = (i*lim_x + j*spacing)/((lim_x)*(lim_y))*100
+            if VERBOSE: 
+                print("completion percentage: " + str(round(percent, 1)))
         values.append(row)
     return(values)
 
@@ -233,6 +237,5 @@ if __name__ == "__main__":
     time.sleep(20)
     data = run_probing(X_LIM, Y_LIM, SPACING)
     send_file('shutdown.txt')
-    #data = [[0.1,0.5,0.5],[0.5,0.5,0.5],[0.5,0.5,0.5]]
     display_heat(data)
     
