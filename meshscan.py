@@ -178,6 +178,7 @@ def run_probing(lim_x, lim_y, spacing):
     values = [] # Move to zero zero before starting.  
     move_delay(0,0,FEED,120*np.sqrt(lim_x**2 + lim_y**2)/FEED)
 
+    offset = spacing/2 #probe in the center of each square
     for i in range(0, lim_x, spacing):  
         row = []
         for j in range(0, lim_y, spacing):
@@ -187,7 +188,10 @@ def run_probing(lim_x, lim_y, spacing):
             else:
                 delay = 120*spacing/FEED  
             # actual do the probing
-            row.append(probe_location(i, j, f = FEED, delay = delay))
+            row.append(probe_location(i+offset,
+                                      j+offset, 
+                                      f = FEED, 
+                                      delay = delay))
             
             percent = (i*lim_x + j*spacing)/((lim_x)*(lim_y))*100
             if VERBOSE: 

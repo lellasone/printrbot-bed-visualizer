@@ -21,6 +21,8 @@ work as an executable under windows as well.
 Clone the repo to a machine running windows. You can do this by clicking on the 
 green "Code" button in the upper right-hand side of this screen. 
 
+The meshscan.exe was automatically generated using pyinstaller. 
+
 #### Full Install (ubuntu)
 Clone the repo to a machine running ubuntu. It may also run under windows but
 I have never tried it. Feel free to start an issue if you run into trouble. 
