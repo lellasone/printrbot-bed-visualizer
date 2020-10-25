@@ -267,8 +267,7 @@ def display_heat(data):
     # Lets condition the data
     mind = np.amin(data)
     data = data-mind # set our lowest value to zero
-    data = np.flipud(data) # set y axis to match most printers
-    
+    data = np.rot90(data) 
     # msc matplot lib stuff 
     a, ax = plt.subplots()
     im = ax.imshow(data)

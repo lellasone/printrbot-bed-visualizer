@@ -25,11 +25,7 @@ or generate your own executable with pyinstaller.
 
 #### Executable Install
  
-Clone the repo to your machine. You can do this by clicking on the 
-green "Code" button in the upper right-hand side of this screen. This method 
-will not get you the most recent code.
-
-The 'meshscan' ubuntu executable was automatically generated using pyinstaller. 
+Comming soon
 
 #### Full Install
 Clone the repo to a machine running ubuntu or windows with python 3. Then install
