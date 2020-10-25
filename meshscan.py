@@ -10,6 +10,7 @@
 
     args:
         -v, verbose:  sets the script to output more internal details. 
+        -l, leveling: sets the script to run in G29 compatablility mode. 
         -b, baud=:    sets the serial buad rate. 
         -p, port=:    sets the comport. 
         -x, x_limit=: how large an area in x to probe over. 
@@ -32,6 +33,10 @@ X_LIM = 150 #default x size in pritner units (ussually mm)
 Y_LIM = 150 #default y size in printer units (ussually mm)
 SPACING = 25 #default distance between points. 
 FEED = 4000
+LEVELING = True
+
+
+#TODO: The correction is a corrective operation
 
 def send_serial(msg, delay = 0.01):
     """! Sends a string over serial to the printer. 
@@ -76,9 +81,11 @@ def get_args():
     global Y_LIM
     global SPACING
     global PRINTER_PORT
+    global LEVELING
     args = sys.argv[1:]
-    opts_short = "vp:b:x:y:s:"
-    opts_long = ["verbose","port=","baud=","x_limit=", "y_limit=","step="]
+    opts_short = "vp:b:x:y:s:l"
+    opts_long = ["verbose","port=","baud=",
+                 "x_limit=", "y_limit=","step=","leveling"]
     try: 
         opts, args = getopt.getopt(args,opts_short, opts_long)
         for opt, arg in opts:
@@ -95,6 +102,8 @@ def get_args():
                 Y_LIM = int(arg)
             elif opt in ("-s", "step="):
                 SPACING = int(arg)
+            elif opt in ("-l", "leveling"):
+                LEVELING = True
         if VERBOSE: print(opts)
 
     except getopt.GetoptError as e:
@@ -124,7 +133,34 @@ def send_file(name):
         start.close()
     except IOError as e:
        print("ERROR READING FILE: " + str(e))
+def taste_leveling(x, y, f = 4000,  delay = 2):
+    """! This function returns the current amount of leveling compensation.  
+    This is useful for building up a scan of the offset applied by the printer
+    to it's actual coordinates during printing. Note that calling G30 will 
+    eliminate any leveling and this will just return the absolute coordinates.
+     
+    The default move delay is suitable for medium-length moves, but may need
+    to be extended for large printer beds. 
+    @param x absolute axis location. 
+    @param y absolute axis location. 
+    @param f in printer units (ussually mm/m)
+    @returns z distance above actual coordiantes that the printer would travel
+               to during printing. 
+    """
+    global VERBOSE
+    if VERBOSE: print("*** Starting Taste ***")
+    move_delay(x, y, f, delay)
     
+    # Get the m114 string and extract the absolute z position.
+    m114, error = send_serial("M114\n", 0.1)
+    if error:
+        zm114 = m114[m114.find(b'Z:')+2:] # strip to the first Z 
+        zzm114 = zm114[zm114.find(b'Z:')+2:zm114.find(b'\n')] # extract the second Z
+        return(float(zzm114)) 
+    else: 
+        return(0) # Not a great default, but there you go.  
+
+   
 def probe_location(x, y, f = 4000,  delay = 2):
     """! Move the print head to the specified location and probe bed height.
     This function moves the print head to the specified location in absolute
@@ -138,8 +174,10 @@ def probe_location(x, y, f = 4000,  delay = 2):
     @param f in printer units (ussually mm/m)
     @returns z height at which bed was detected.
     """
+    global VERBOSE
+    if VERBOSE: print("*** Starting Probe ***")
     move_delay(x, y, f, delay)
-        # Find the z offset.
+    
     res, error = send_serial("G30\n", 1)
     if error:
         temp =  res.find(b'endstops') 
@@ -149,7 +187,7 @@ def probe_location(x, y, f = 4000,  delay = 2):
     else: 
         return(0) # Not a great default, but there you go.  
 
-def move_delay(x, y, f, delay):
+def move_delay(x, y, f, delay, z = 0):
     """! Makes an absolute move to a position and then waits the delay.
     This function wrapps a G0 command with a delay command. It is useful
     for general purpose moves. A G90 command is used to set the coordinates
@@ -160,15 +198,18 @@ def move_delay(x, y, f, delay):
     @param delay how long to wait in seconds. 
     """ 
     send_serial("G90\n") #Set to absolute coordinates.
-    send_serial("G0  F{} X{} Y{}\n".format(f, x, y), delay) #move to position.
+    send_serial("G0  F{} X{} Y{} Z{}\n".format(f, x, y, z), delay) #move to position.
                                
-def run_probing(lim_x, lim_y, spacing):
+def run_probing(lim_x, lim_y, spacing, leveling = False):
     """! Main testing loop of the program, this executes probes each location.
     Executes a printer height probe at each location specified by the operating
-    area and spacing paramiter. 
+    area and spacing paramiter. This function can also be used to get the
+    actual offset map of G29 bed leveling.  
     @param lim_y y dimension of the area to test. 
     @param lim_x x dimension of the area to test. 
     @param seperation along each axis of probe locations.
+    @param leveling sets the function to return the leveling compensation map
+                    rather then the bed height map. 
     @returns array containing the read z value at each test location. 
     """ 
     global VERBOSE 
@@ -187,12 +228,17 @@ def run_probing(lim_x, lim_y, spacing):
                 delay = 120*lim_y/FEED
             else:
                 delay = 120*spacing/FEED  
-            # actual do the probing
-            row.append(probe_location(i+offset,
-                                      j+offset, 
-                                      f = FEED, 
-                                      delay = delay))
-            
+            if leveling:
+                row.append(taste_leveling(i+offset,
+                                          j+offset,
+                                          f = FEED,
+                                          delay = delay))    
+            else:
+                row.append(probe_location(i+offset,
+                                          j+offset, 
+                                          f = FEED, 
+                                          delay = delay))
+                
             percent = (i*lim_x + j*spacing)/((lim_x)*(lim_y))*100
             if VERBOSE: 
                 print("completion percentage: " + str(round(percent, 1)) + "%")
@@ -203,14 +249,13 @@ def display_heat(data):
     """! Geneates and displays a heat map of the bed's height data.
     The map will be displayed with the G30 values set relative to the
     smallest value. 
-    @param data an n by n array of the z offsets to be displayed.
+    @param data an n by n numpy array of the z offsets to be displayed.
     """ 
     global Y_LIM
     global SPACING
     global X_LIM
     print(data)
     # Lets condition the data
-    data = np.array(data)
     mind = np.amin(data)
     data = data-mind # set our lowest value to zero
     data = np.flipud(data) # set y axis to match most printers
@@ -246,7 +291,8 @@ if __name__ == "__main__":
     get_args()
     send_file('startup.txt')
     time.sleep(20)
+    offset = run_probing(X_LIM, Y_LIM, SPACING, leveling = True)
     data = run_probing(X_LIM, Y_LIM, SPACING)
     send_file('shutdown.txt')
-    display_heat(data)
+    display_heat(np.array(data)-np.array(offset))
     

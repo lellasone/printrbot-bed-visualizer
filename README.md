@@ -6,6 +6,9 @@ A python script for visualizing the surface geometry of a printerbot's bed using
 the onboard capacitive sensor. It will most likely also work for plenty of other
 printers provided you tweak the settings a bit. 
 
+If requested this script will apply the printer's G29 compensation, allowing
+you to see how effective the automatic bed leveling is. 
+
 Also included is a simple fixture for mounting a dial indicator to the 
 capacitive sensor. However, I found the onboard capacitive sensor to be
 repeatable to within +- 0.25 thou, so I would stick with that unless you are 
@@ -54,7 +57,7 @@ what exactly you want to do.
  
 __Run as a python script__
 ```
-python3 meshscan.py -v -x 150 -y 150 -s 10 
+python3 meshscan.py -v -x 150 -y 150 -s 10 -l -p /dev/ttyACM0 
 ```
 
 __Run as a windows executable__
@@ -75,12 +78,12 @@ windows is 'COM0'.
 |Parameter                     | Default | Description |
 | :----------------------------|:--------|:------------|
 | -v, verbose                  | False   | prints out extra info.|
+| -l, leveling                 | False   | Apply compatability with G29 height compensation. 
 | -b, baud                     | 250000  | baud rate for serial transmission. (firmware specific)|
 | -p, port                     | /dev/ttyACM0 | COMPORT to use for communicating with the printer.|
 | -x, x_limit                  | 150     | size of area to scan in mm. |
 | -y, y_limit                  | 150     | size of area to scan in mm. |
 | -s, step                     | 25      | linear spacing along each axis between probe locations in mm. 
-
 #### Start and end files 
 Place your machine's startup g-code into the startup.txt file. This will be run
 prior to the scan. Use this to run any commands (say homing or bed leveing) run
