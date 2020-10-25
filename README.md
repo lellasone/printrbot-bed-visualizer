@@ -72,13 +72,24 @@ connected to your computer. Both can be found in your g-code sender. A good
 default comport for ubuntu is '/dev/ttyACM0' and a good default guess for 
 windows is 'COM0'.
 
+#### Reading the plot
+
+The heat map is annotated with the "height" of each probe point relative to the 
+lowest position probed. When using the script in G29 compatability mode, the 
+"height" used is given by [measured bed height] - [bed compensation offset]. 
+This means that areas that read as higher (more yellow) on the chart will tend
+to have a nozel closer to the bed and areas that read lower (more blue) will
+tend to have the nozel farther from the bed. 
+
+In general, a difference of more then about .05 is probobly cause for concern. 
+
 #### Command Line Arguments
 
 
 |Parameter                     | Default | Description |
 | :----------------------------|:--------|:------------|
 | -v, verbose                  | False   | prints out extra info.|
-| -l, leveling                 | False   | Apply compatability with G29 height compensation. 
+| -l, leveling                 | False    | Apply compatability with G29 height compensation (doubles run time). 
 | -b, baud                     | 250000  | baud rate for serial transmission. (firmware specific)|
 | -p, port                     | /dev/ttyACM0 | COMPORT to use for communicating with the printer.|
 | -x, x_limit                  | 150     | size of area to scan in mm. |

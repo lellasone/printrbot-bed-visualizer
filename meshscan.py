@@ -33,7 +33,7 @@ X_LIM = 150 #default x size in pritner units (ussually mm)
 Y_LIM = 150 #default y size in printer units (ussually mm)
 SPACING = 25 #default distance between points. 
 FEED = 4000
-LEVELING = True
+LEVELING = False
 
 
 #TODO: The correction is a corrective operation
