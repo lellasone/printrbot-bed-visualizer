@@ -17,24 +17,29 @@ worried it is failing.
 ### installation
 I use ubuntu and have only somewhat tested the executable under windows. I
 recommend running the script as a python script under ubuntu, but it should
-work as an executable under windows as well.
+work as an executable under windows as well. The two executables (windows and 
+ubuntu) are updated only periodically. If you need a feature that doesn't seem
+to be in the executable version but is in the script feel free to open an issue
+or generate your own executable with pyinstaller.
 
 
-#### Executable Install (windows)
-Clone the repo to a machine running windows. You can do this by clicking on the 
-green "Code" button in the upper right-hand side of this screen. 
+#### Executable Install
+ 
+Clone the repo to your machine. You can do this by clicking on the 
+green "Code" button in the upper right-hand side of this screen. This method 
+will not get you the most recent code.
 
-The meshscan.exe was automatically generated using pyinstaller. 
+The 'meshscan' ubuntu executable was automatically generated using pyinstaller. 
 
-#### Full Install (ubuntu)
-Clone the repo to a machine running ubuntu. It may also run under windows but
-I have never tried it. Feel free to start an issue if you run into trouble. 
-Then install the dependencies below.  
+#### Full Install
+Clone the repo to a machine running ubuntu or windows with python 3. Then install
+the dependencies below. 
 
 ```
 pip3 install matplotlib
 pip3 install numpy
 pip3 install pyserial
+pip3 install pyinstaller # Optional, only if you plan to make executables
 ```
  
 #### Dial indicator
@@ -53,16 +58,16 @@ quite good) although I have not tried it for this particular part.
 
 After completing the installation (above) the script can be run from the 
 command line as follows. Your arguments (below) may be different depending on 
-what exactly you want to do. 
+what exactly you want to do.
  
 __Run as a python script__
 ```
-python3 meshscan.py -v -x 150 -y 150 -s 10 -l -p /dev/ttyACM0 
+python3 meshscan.py -v -x 150 -y 150 -s 25 -l -p /dev/ttyACM0 
 ```
 
-__Run as a windows executable__
+__Run as a ubuntu executable__
 ```
-#TODO: put something reasonable here
+./meshscan -v -x 150 -y 150 -s 25 -l -p /dev/ttyACM0
 ```
 
 Unless your system is very similar to mine you may need to change the port and 
@@ -83,6 +88,15 @@ tend to have the nozel farther from the bed.
 
 In general, a difference of more then about .05 is probobly cause for concern. 
 
+__saturation__
+
+When there is a really big difference (~ 2mm) between different parts of the 
+bed, or when you have a large default z offset then parts of the map will 
+saturate. To fix this tweak the PROBE_HEIGHT paramiter up, or open an issue.
+
+Note: Areas that saturate may actually be significantly lower then the value on
+the chart.
+ 
 #### Command Line Arguments
 
 

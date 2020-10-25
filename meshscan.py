@@ -34,6 +34,7 @@ Y_LIM = 150 #default y size in printer units (ussually mm)
 SPACING = 25 #default distance between points. 
 FEED = 4000
 LEVELING = False
+PROBE_HEIGHT = 4
 
 
 #TODO: The correction is a corrective operation
@@ -138,6 +139,10 @@ def taste_leveling(x, y, f = 4000,  delay = 2):
     This is useful for building up a scan of the offset applied by the printer
     to it's actual coordinates during printing. Note that calling G30 will 
     eliminate any leveling and this will just return the absolute coordinates.
+    
+
+    If the LEVELING global variable is set to false then this function just
+    returns zero.
      
     The default move delay is suitable for medium-length moves, but may need
     to be extended for large printer beds. 
@@ -148,18 +153,21 @@ def taste_leveling(x, y, f = 4000,  delay = 2):
                to during printing. 
     """
     global VERBOSE
-    if VERBOSE: print("*** Starting Taste ***")
-    move_delay(x, y, f, delay)
-    
-    # Get the m114 string and extract the absolute z position.
-    m114, error = send_serial("M114\n", 0.1)
-    if error:
-        zm114 = m114[m114.find(b'Z:')+2:] # strip to the first Z 
-        zzm114 = zm114[zm114.find(b'Z:')+2:zm114.find(b'\n')] # extract the second Z
-        return(float(zzm114)) 
-    else: 
-        return(0) # Not a great default, but there you go.  
-
+    global LEVELING
+    if LEVELING:
+        if VERBOSE: print("*** Starting Taste ***")
+        move_delay(x, y, f, delay)
+        
+        # Get the m114 string and extract the absolute z position.
+        m114, error = send_serial("M114\n", 0.1)
+        if error:
+            zm114 = m114[m114.find(b'Z:')+2:] # strip to the first Z 
+            zzm114 = zm114[zm114.find(b'Z:')+2:zm114.find(b'\n')] # extract the second Z
+            return(float(zzm114)) 
+        else: 
+            return(0) # Not a great default, but there you go. 
+    else:
+        return(0) #create an empty offset map. 
    
 def probe_location(x, y, f = 4000,  delay = 2):
     """! Move the print head to the specified location and probe bed height.
@@ -175,10 +183,11 @@ def probe_location(x, y, f = 4000,  delay = 2):
     @returns z height at which bed was detected.
     """
     global VERBOSE
+    global PROBE_HEIGHT
     if VERBOSE: print("*** Starting Probe ***")
-    move_delay(x, y, f, delay)
+    move_delay(x, y, f, delay, z=PROBE_HEIGHT)
     
-    res, error = send_serial("G30\n", 1)
+    res, error = send_serial("G30\n", 2)
     if error:
         temp =  res.find(b'endstops') 
         res = res[temp:]
