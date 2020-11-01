@@ -9,13 +9,14 @@
     proper arguments.   
 
     args:
-        -v, verbose:  sets the script to output more internal details. 
-        -l, leveling: sets the script to run in G29 compatablility mode. 
-        -b, baud=:    sets the serial buad rate. 
-        -p, port=:    sets the comport. 
-        -x, x_limit=: how large an area in x to probe over. 
-        -y, y_limit=: how large an area in y to probe over. 
-        -s, step=:    how far in each axis to move between probings. 
+        -v, verbose:      sets the script to output more internal details. 
+        -l, leveling:     sets the script to run in G29 compatablility mode. 
+        -m, modern_marlin sets compatability for modernmarlin firmware. 
+        -b, baud=:        sets the serial buad rate. 
+        -p, port=:        sets the comport. 
+        -x, x_limit=:     how large an area in x to probe over. 
+        -y, y_limit=:     how large an area in y to probe over. 
+        -s, step=:        how far in each axis to move between probings. 
 '''
 import sys
 import getopt
@@ -35,9 +36,10 @@ SPACING = 25 #default distance between points.
 FEED = 4000
 LEVELING = False
 PROBE_HEIGHT = 4
+PROBE_DELAY  = 2 # How long to wait during a G30 operation. This is dependent
+                 # ont he probe height and firmware revision. 
+MODERN_MARLIN = False
 
-
-#TODO: The correction is a corrective operation
 
 def send_serial(msg, delay = 0.01):
     """! Sends a string over serial to the printer. 
@@ -62,7 +64,7 @@ def send_serial(msg, delay = 0.01):
         ser = serial.Serial(PRINTER_PORT,timeout=1)
         ser.write(bytes(msg, 'ascii'))
         time.sleep(delay) #some commands may take seconds to execute.
-        resp = ser.read(100)
+        resp = ser.read(150)
         worked = True
     except serial.SerialException as e:
         print("SERIAL ERROR WHILE SENDIGN: " +str(e))
@@ -83,10 +85,12 @@ def get_args():
     global SPACING
     global PRINTER_PORT
     global LEVELING
+    global PROBE_DELAY
+    global MODERN_MARLIN
     args = sys.argv[1:]
-    opts_short = "vp:b:x:y:s:l"
+    opts_short = "vp:b:x:y:s:lm"
     opts_long = ["verbose","port=","baud=",
-                 "x_limit=", "y_limit=","step=","leveling"]
+                 "x_limit=", "y_limit=","step=","leveling","modern_marlin"]
     try: 
         opts, args = getopt.getopt(args,opts_short, opts_long)
         for opt, arg in opts:
@@ -105,6 +109,13 @@ def get_args():
                 SPACING = int(arg)
             elif opt in ("-l", "leveling"):
                 LEVELING = True
+            elif opt in ("-m", "modern_marlin"):
+                PROBE_DELAY = 6
+                MODERN_MARLIN = True
+                print(("WARNING: Marlin firmware may be unable to probe extreme "
+                       "edges of the printbed. Consider reducing the x and y "
+                       "dimensions of the probe area and increasing the step "
+                       "size if edge saturation occurs."))
         if VERBOSE: print(opts)
 
     except getopt.GetoptError as e:
@@ -184,14 +195,28 @@ def probe_location(x, y, f = 4000,  delay = 2):
     """
     global VERBOSE
     global PROBE_HEIGHT
+    global PROBE_DELAY
+    global MODERN_MARLIN
     if VERBOSE: print("*** Starting Probe ***")
     move_delay(x, y, f, delay, z=PROBE_HEIGHT)
     
-    res, error = send_serial("G30\n", 2)
+    res, error = send_serial("G30\n", PROBE_DELAY)
     if error:
-        temp =  res.find(b'endstops') 
-        res = res[temp:]
-        val = float(res[res.find(b'Z:')+2:])
+        # handle different string config between firmware versions these pretty
+        # much have to be hand crafted for each version. 
+        if MODERN_MARLIN:
+            if len(res) < 10:
+                # Weird known bug in marlin relating to M851 settings. 
+                print("WARNING: Unable to probe this location, setting height 0")
+                val = 0
+            else:   
+                res = res[res.find(b'Z:') + 2:]
+                end = res.find(b'\n')
+                val = float(res[:end])
+        else:
+            temp =  res.find(b'endstops') 
+            res = res[temp:]
+            val = float(res[res.find(b'Z:')+2:])
         return(val) 
     else: 
         return(0) # Not a great default, but there you go.  
@@ -234,7 +259,7 @@ def run_probing(lim_x, lim_y, spacing, leveling = False):
         for j in range(0, lim_y, spacing):
             # Set the move delay based on expected travel distance
             if j == 0: 
-                delay = 120*lim_y/FEED
+                delay = 150*lim_y/FEED
             else:
                 delay = 120*spacing/FEED  
             if leveling:
@@ -249,8 +274,7 @@ def run_probing(lim_x, lim_y, spacing, leveling = False):
                                           delay = delay))
                 
             percent = (i*lim_x + j*spacing)/((lim_x)*(lim_y))*100
-            if VERBOSE: 
-                print("completion percentage: " + str(round(percent, 1)) + "%")
+            print("completion percentage: " + str(round(percent, 1)) + "%")
         values.append(row)
     return(values)
 
@@ -298,7 +322,7 @@ def display_heat(data):
 if __name__ == "__main__":
     get_args()
     send_file('startup.txt')
-    time.sleep(20)
+    time.sleep(30)
     offset = run_probing(X_LIM, Y_LIM, SPACING, leveling = True)
     data = run_probing(X_LIM, Y_LIM, SPACING)
     send_file('shutdown.txt')
