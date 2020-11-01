@@ -15,7 +15,7 @@ capacitive sensor. However, I found the onboard capacitive sensor to be
 repeatable to within +- 0.25 thou, so I would stick with that unless you are 
 worried it is failing. 
 
-### installation
+### Installation
 I use ubuntu and have only somewhat tested the executable under windows. I
 recommend running the script as a python script under ubuntu, but it should
 work as an executable under windows as well. The two executables (windows and 
@@ -33,6 +33,7 @@ Clone the repo to a machine running ubuntu or windows with python 3. Then instal
 the dependencies below. 
 
 ```
+git clone git@github.com:lellasone/printrbot-bed-visualizer.git
 pip3 install matplotlib
 pip3 install numpy
 pip3 install pyserial
