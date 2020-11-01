@@ -7,7 +7,8 @@ the onboard capacitive sensor. It will most likely also work for plenty of other
 printers provided you tweak the settings a bit. 
 
 If requested this script will apply the printer's G29 compensation, allowing
-you to see how effective the automatic bed leveling is. 
+you to see how effective the automatic bed leveling is. The script is compatable
+with both the stock printerbot firmware and modern_marlin firmware. 
 
 Also included is a simple fixture for mounting a dial indicator to the 
 capacitive sensor. However, I found the onboard capacitive sensor to be
@@ -86,10 +87,20 @@ In general, a difference of more then about .05 is probobly cause for concern.
 
 __saturation__
 
-When there is a really big difference (~ 2mm) between different parts of the 
+Saturation (large areas of the heatmap returning identical values when you know
+that not to be the case) can occur in two cases as follows:
+
+Low valued saturation around the heatmap edges may occur when your firmware has
+been set to prevent probe use near the bed edges, or when an offset has been
+defined between the probe and the nozzel. These settings are set in firmware and
+short of re-flashing the machine there is nothing to be done about it. adjusting
+the bed dimensions and step size can remove these areas from your chart if
+desired. 
+
+High-valued saturation may occur When there is a really big difference (~ 2mm) 
+between different parts of the 
 bed, or when you have a large default z offset then parts of the map will 
 saturate. To fix this tweak the PROBE_HEIGHT paramiter up, or open an issue.
-
 Note: Areas that saturate may actually be significantly lower then the value on
 the chart.
  
@@ -99,7 +110,8 @@ the chart.
 |Parameter                     | Default | Description |
 | :----------------------------|:--------|:------------|
 | -v, verbose                  | False   | prints out extra info.|
-| -l, leveling                 | False    | Apply compatability with G29 height compensation (doubles run time). 
+| -l, leveling                 | False   | Apply compatability with G29 height compensation (doubles run time). 
+| -m, modern_marlin            | False   | Sets the scan to run with parsers conpatable with the modern marlin G30 output format.  
 | -b, baud                     | 250000  | baud rate for serial transmission. (firmware specific)|
 | -p, port                     | /dev/ttyACM0 | COMPORT to use for communicating with the printer.|
 | -x, x_limit                  | 150     | size of area to scan in mm. |
