@@ -39,9 +39,10 @@ PROBE_HEIGHT = 4
 PROBE_DELAY  = 2 # How long to wait during a G30 operation. This is dependent
                  # ont he probe height and firmware revision. 
 MODERN_MARLIN = False
+STEPS_PER_UNIT_Z = 2020 #this really isn't going to be correct without tuning. 
 
 
-def send_serial(msg, delay = 0.01):
+def send_serial(msg, delay = 0.01, expected_len = 150):
     """! Sends a string over serial to the printer. 
     This function connects to the robot, sends the specified string, and then 
     disconnects from the printer. Note that comport exceptions are caught and 
@@ -53,6 +54,7 @@ def send_serial(msg, delay = 0.01):
     @pram delay time to wait (in seconds) between sending a message and reading
                 the reply. The default is fine for settings or move commands,
                 but may be too short for quiries that involve movement.
+    @param expected_len how many bytes to wait for on read
     @returns the serial responce if any and a bool to indicate if an error
              occured while executing. 
     """
@@ -64,7 +66,7 @@ def send_serial(msg, delay = 0.01):
         ser = serial.Serial(PRINTER_PORT,timeout=1)
         ser.write(bytes(msg, 'ascii'))
         time.sleep(delay) #some commands may take seconds to execute.
-        resp = ser.read(150)
+        resp = ser.read(expected_len)
         worked = True
     except serial.SerialException as e:
         print("SERIAL ERROR WHILE SENDIGN: " +str(e))
@@ -174,7 +176,12 @@ def taste_leveling(x, y, f = 4000,  delay = 2):
         if error:
             zm114 = m114[m114.find(b'Z:')+2:] # strip to the first Z 
             zzm114 = zm114[zm114.find(b'Z:')+2:zm114.find(b'\n')] # extract the second Z
-            return(float(zzm114)) 
+            
+            # Marlin returns value in steps rather then units. 
+            if MODERN_MARLIN:
+                return(float(zzm114)/STEPS_PER_UNIT_Z)
+            else:
+                return(float(zzm114)) 
         else: 
             return(0) # Not a great default, but there you go. 
     else:
@@ -317,10 +324,28 @@ def display_heat(data):
     plt.show()
     
 
+def get_conversion():
+    """ Get the steps per unit from the printer and record that global value. 
+    This should probobly be called after the initial startup file is sent to
+    ensure the units are correct. 
 
+    Note: something will probobly break if the printer isn't actually in mm.
+    """
+    global STEPS_PER_UNIT_Z
+    global VERBOSE
+    (msg, worked)= send_serial("M503\n", expected_len = 500)
+    if worked:
+        msg = msg[msg.find(b'Steps per unit:')+15:] # strip to unit conversions. 
+        msg = msg[msg.find(b'Z')+1:] # strip to z. 
+        msg = msg[:msg.find(b'E')] #remove everything after the z value. 
+        if VERBOSE: print("Their are {} steps per mm on the Z axis".format(msg))
+        STEPS_PER_UNIT_Z = float(msg)
+    else:
+        print("WARNING: Unable to set steps per mm Z")
 
 if __name__ == "__main__":
     get_args()
+    get_conversion()
     send_file('startup.txt')
     time.sleep(30)
     offset = run_probing(X_LIM, Y_LIM, SPACING, leveling = True)
