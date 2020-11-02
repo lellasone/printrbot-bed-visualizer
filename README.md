@@ -86,7 +86,7 @@ tend to have the nozel farther from the bed.
 
 In general, a difference of more then about .05 is probobly cause for concern. 
 
-__saturation__
+__Saturation__
 
 Saturation (large areas of the heatmap returning identical values when you know
 that not to be the case) can occur in two cases as follows:
