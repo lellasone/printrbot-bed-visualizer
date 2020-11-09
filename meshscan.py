@@ -16,7 +16,8 @@
         -p, port=:        sets the comport. 
         -x, x_limit=:     how large an area in x to probe over. 
         -y, y_limit=:     how large an area in y to probe over. 
-        -s, step=:        how far in each axis to move between probings. 
+        -s, step=:        how far in each axis to move between probings.
+        -d, start_delay   determins how long to wait after sending start script. 
 '''
 import sys
 import getopt
@@ -40,7 +41,7 @@ PROBE_DELAY  = 2 # How long to wait during a G30 operation. This is dependent
                  # ont he probe height and firmware revision. 
 MODERN_MARLIN = False
 STEPS_PER_UNIT_Z = 2020 #this really isn't going to be correct without tuning. 
-
+START_DELAY = 30
 
 def send_serial(msg, delay = 0.01, expected_len = 150):
     """! Sends a string over serial to the printer. 
@@ -89,9 +90,10 @@ def get_args():
     global LEVELING
     global PROBE_DELAY
     global MODERN_MARLIN
+    global START_DELAY
     args = sys.argv[1:]
-    opts_short = "vp:b:x:y:s:lm"
-    opts_long = ["verbose","port=","baud=",
+    opts_short = "vp:b:x:y:s:lmd:"
+    opts_long = ["verbose","port=","baud=", "start_delay=",
                  "x_limit=", "y_limit=","step=","leveling","modern_marlin"]
     try: 
         opts, args = getopt.getopt(args,opts_short, opts_long)
@@ -99,25 +101,28 @@ def get_args():
             if opt in ("-v", "verbose"):
                 VERBOSE = True
                 print("Using verbose output mode")
-            elif opt in ("-p", "port"):
+            elif opt in ("-p", "--port"):
                 PRINTER_PORT = arg 
-            elif opt in ("-b", "baud="):
+            elif opt in ("-b", "--baud"):
                 BAUD_RATE = int(arg)
-            elif opt in ("-x", "x_limit="):
+            elif opt in ("-x", "--x_limit"):
                 X_LIM = int(arg)
-            elif opt in ("-y", "y_limit="):
+            elif opt in ("-y", "--y_limit"):
                 Y_LIM = int(arg)
-            elif opt in ("-s", "step="):
+            elif opt in ("-s", "--step"):
                 SPACING = int(arg)
-            elif opt in ("-l", "leveling"):
+            elif opt in ("-l", "--leveling"):
                 LEVELING = True
-            elif opt in ("-m", "modern_marlin"):
+            elif opt in ("-m", "--modern_marlin"):
                 PROBE_DELAY = 6
                 MODERN_MARLIN = True
                 print(("WARNING: Marlin firmware may be unable to probe extreme "
                        "edges of the printbed. Consider reducing the x and y "
                        "dimensions of the probe area and increasing the step "
                        "size if edge saturation occurs."))
+            elif opt in ("-d", "--start_delay"):
+                START_DELAY = int(arg)
+                print("Start Delay: " + str(arg))
         if VERBOSE: print(opts)
 
     except getopt.GetoptError as e:
@@ -147,6 +152,7 @@ def send_file(name):
         start.close()
     except IOError as e:
        print("ERROR READING FILE: " + str(e))
+
 def taste_leveling(x, y, f = 4000,  delay = 2):
     """! This function returns the current amount of leveling compensation.  
     This is useful for building up a scan of the offset applied by the printer
@@ -347,8 +353,10 @@ if __name__ == "__main__":
     get_args()
     get_conversion()
     send_file('startup.txt')
-    time.sleep(30)
+    time.sleep(START_DELAY)
+    print("Mapping Compensation Field")
     offset = run_probing(X_LIM, Y_LIM, SPACING, leveling = True)
+    print("Mapping Physical Bed Geometry")
     data = run_probing(X_LIM, Y_LIM, SPACING)
     send_file('shutdown.txt')
     display_heat(np.array(data)-np.array(offset))
