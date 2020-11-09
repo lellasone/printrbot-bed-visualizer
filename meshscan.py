@@ -40,6 +40,11 @@ PROBE_DELAY = 2  # How long to wait during a G30 operation. This is dependent on
 MODERN_MARLIN = False
 
 
+def log(msg):
+    if VERBOSE: 
+        print(msg)
+    
+
 def send_serial(msg, delay=0.01):
     """! Sends a string over serial to the printer. 
     This function connects to the robot, sends the specified string, and then 
@@ -55,7 +60,7 @@ def send_serial(msg, delay=0.01):
     @returns the serial responce if any and a bool to indicate if an error
              occured while executing. 
     """
-    if VERBOSE: print("sending: " + msg)
+    log("sending: " + msg)
     worked = False
     try:
         if not msg.endswith('\n'):
@@ -69,7 +74,7 @@ def send_serial(msg, delay=0.01):
     except serial.SerialException as e:
         print("SERIAL ERROR WHILE SENDIGN: " + str(e))
         resp = ''
-    if VERBOSE: print(resp)
+    log(resp)
     return resp, worked
 
 
@@ -111,11 +116,11 @@ def get_args():
             elif opt in ("-m", "modern_marlin"):
                 PROBE_DELAY = 6
                 MODERN_MARLIN = True
-                print(("WARNING: Marlin firmware may be unable to probe extreme "
+                print("WARNING: Marlin firmware may be unable to probe extreme "
                        "edges of the printbed. Consider reducing the x and y "
                        "dimensions of the probe area and increasing the step "
-                       "size if edge saturation occurs."))
-        if VERBOSE: print(opts)
+                       "size if edge saturation occurs.")
+        log(opts)
 
     except getopt.GetoptError as e:
         print("Argument Error: " + str(e))
@@ -165,7 +170,7 @@ def taste_leveling(x, y, f=4000,  delay=2):
                to during printing. 
     """
     if LEVELING:
-        if VERBOSE: print("*** Starting Taste ***")
+        log("*** Starting Taste ***")
         move_delay(x, y, f, delay)
 
         # Get the m114 string and extract the absolute z position.
@@ -174,7 +179,7 @@ def taste_leveling(x, y, f=4000,  delay=2):
             zm114 = m114[m114.find(b'Z:')+2:]  # strip to the first Z
             # extract the second Z
             zzm114 = zm114[zm114.find(b'Z:')+2:zm114.find(b'\n')]
-            return(float(zzm114))
+            return float(zzm114)
         else:
             return 0  # Not a great default, but there you go.
     else:
@@ -194,7 +199,7 @@ def probe_location(x, y, f=4000,  delay=2):
     @param f in printer units (ussually mm/m)
     @returns z height at which bed was detected.
     """
-    if VERBOSE: print("*** Starting Probe ***")
+    log("*** Starting Probe ***")
     move_delay(x, y, f, delay, z=PROBE_HEIGHT)
 
     res, error = send_serial("G30", PROBE_DELAY)
@@ -247,7 +252,7 @@ def run_probing(lim_x, lim_y, spacing, leveling=False):
                     rather then the bed height map. 
     @returns array containing the read z value at each test location. 
     """
-    if VERBOSE: print("run probing")
+    log("run probing")
 
     values = []  # Move to zero zero before starting.
     move_delay(0, 0, FEED, 120*np.sqrt(lim_x**2 + lim_y**2)/FEED)
