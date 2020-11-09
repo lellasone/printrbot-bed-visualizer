@@ -60,6 +60,9 @@ def send_serial(msg, delay=0.01):
     if VERBOSE: print("sending: " + msg)
     worked = False
     try:
+        if not msg.endswith('\n'):
+            msg = msg + '\n'
+
         ser = serial.Serial(PRINTER_PORT, timeout=1)
         ser.write(bytes(msg, 'ascii'))
         time.sleep(delay)  # some commands may take seconds to execute.
@@ -138,8 +141,6 @@ def send_file(name):
         for line in start:
             # Handle comments (sorta)
             send = line[:line.find(';')]
-            if send[-1] != '\n':
-                send = send + "\n"
             # Send the data.
             send_serial(send)
         start.close()
@@ -172,7 +173,7 @@ def taste_leveling(x, y, f=4000,  delay=2):
         move_delay(x, y, f, delay)
 
         # Get the m114 string and extract the absolute z position.
-        m114, error = send_serial("M114\n", 0.1)
+        m114, error = send_serial("M114", 0.1)
         if error:
             zm114 = m114[m114.find(b'Z:')+2:]  # strip to the first Z
             # extract the second Z
@@ -204,7 +205,7 @@ def probe_location(x, y, f=4000,  delay=2):
     if VERBOSE: print("*** Starting Probe ***")
     move_delay(x, y, f, delay, z=PROBE_HEIGHT)
 
-    res, error = send_serial("G30\n", PROBE_DELAY)
+    res, error = send_serial("G30", PROBE_DELAY)
     if error:
         # handle different string config between firmware versions these pretty
         # much have to be hand crafted for each version.
@@ -237,9 +238,9 @@ def move_delay(x, y, f, delay, z=0):
     @param delay how long to wait in seconds. 
     """
     # Set to absolute coordinates.
-    send_serial("G90\n")
+    send_serial("G90")
     # move to position.
-    send_serial("G0  F{} X{} Y{} Z{}\n".format(f, x, y, z), delay)
+    send_serial("G0  F{} X{} Y{} Z{}".format(f, x, y, z), delay)
 
 
 def run_probing(lim_x, lim_y, spacing, leveling=False):
