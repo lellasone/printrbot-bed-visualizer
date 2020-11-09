@@ -55,8 +55,6 @@ def send_serial(msg, delay=0.01):
     @returns the serial responce if any and a bool to indicate if an error
              occured while executing. 
     """
-    global VERBOSE
-    global PRINTER_PORT
     if VERBOSE: print("sending: " + msg)
     worked = False
     try:
@@ -166,8 +164,6 @@ def taste_leveling(x, y, f=4000,  delay=2):
     @returns z distance above actual coordiantes that the printer would travel
                to during printing. 
     """
-    global VERBOSE
-    global LEVELING
     if LEVELING:
         if VERBOSE: print("*** Starting Taste ***")
         move_delay(x, y, f, delay)
@@ -198,10 +194,6 @@ def probe_location(x, y, f=4000,  delay=2):
     @param f in printer units (ussually mm/m)
     @returns z height at which bed was detected.
     """
-    global VERBOSE
-    global PROBE_HEIGHT
-    global PROBE_DELAY
-    global MODERN_MARLIN
     if VERBOSE: print("*** Starting Probe ***")
     move_delay(x, y, f, delay, z=PROBE_HEIGHT)
 
@@ -255,8 +247,6 @@ def run_probing(lim_x, lim_y, spacing, leveling=False):
                     rather then the bed height map. 
     @returns array containing the read z value at each test location. 
     """
-    global VERBOSE
-    global FEED
     if VERBOSE: print("run probing")
 
     values = []  # Move to zero zero before starting.
@@ -295,9 +285,6 @@ def display_heat(data):
     smallest value. 
     @param data an n by n numpy array of the z offsets to be displayed.
     """
-    global Y_LIM
-    global SPACING
-    global X_LIM
     print(data)
     # Lets condition the data
     mind = np.amin(data)
@@ -314,11 +301,10 @@ def display_heat(data):
                     ha="center", va="center", color="b")
 
     # Lets set up the axis labels
-    x_lim = X_LIM  # Fixes a variable not defined issue. Why? Who knows...
-    ax.set_yticks(range(0, int(Y_LIM/SPACING)))
+    ax.set_yticks(range(0, int(Y_LIM / SPACING)))
     ax.set_yticklabels(np.flipud(np.arange(0, Y_LIM, SPACING))+SPACING/2)
-    ax.set_xticks(range(0, int(x_lim / SPACING)))
-    ax.set_xticklabels(np.arange(0, x_lim, SPACING)+SPACING/2)
+    ax.set_xticks(range(0, int(X_LIM / SPACING)))
+    ax.set_xticklabels(np.arange(0, X_LIM, SPACING)+SPACING/2)
 
     plt.colorbar(im, ax=ax)
     ax.set_title("3D Printer Flatness Map (mm)")
