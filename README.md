@@ -60,7 +60,7 @@ what exactly you want to do.
  
 __Run as a python script__
 ```
-python3 meshscan.py -v -x 150 -y 150 -s 25 -l -p /dev/ttyACM0 
+python3 meshscan.py -v -x 150 -y 150 -s 25 -l -p /dev/ttyACM0 --start_delay=30 
 ```
 
 __Run as a ubuntu executable__
@@ -68,12 +68,19 @@ __Run as a ubuntu executable__
 ./meshscan -v -x 150 -y 150 -s 25 -l -p /dev/ttyACM0
 ```
 
+__Serial Errors__
 Unless your system is very similar to mine you may need to change the port and 
 baud rate arguments. The baud rate is a product of the firmware installed on 
 your printer, and the comport is a product of the order in which devices are
 connected to your computer. Both can be found in your g-code sender. A good
 default comport for ubuntu is '/dev/ttyACM0' and a good default guess for 
 windows is 'COM0'.
+
+__M114 Read Error on Scan Start__
+Larger printers may take longer then the default time to execute their startup
+script depending on the options used. This can cause an error where the script
+begins it's scan while the printer is still leveling the bed. To deal with this
+increase the `--start_delay` argument. 
 
 #### Reading the plot
 
@@ -118,6 +125,8 @@ the chart.
 | -x, x_limit                  | 150     | size of area to scan in mm. |
 | -y, y_limit                  | 150     | size of area to scan in mm. |
 | -s, step                     | 25      | linear spacing along each axis between probe locations in mm. 
+| -d, start_dela               | 30      | How long to allow the startup script for execution before begining scan.
+
 #### Start and end files 
 Place your machine's startup g-code into the startup.txt file. This will be run
 prior to the scan. Use this to run any commands (say homing or bed leveing) run
