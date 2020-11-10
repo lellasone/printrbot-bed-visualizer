@@ -61,7 +61,6 @@ def send_serial(msg, delay=0.01):
              occured while executing. 
     """
     log("sending: " + msg)
-    worked = False
     try:
         if not msg.endswith('\n'):
             msg = msg + '\n'
@@ -69,13 +68,17 @@ def send_serial(msg, delay=0.01):
         ser = serial.Serial(PRINTER_PORT, timeout=1)
         ser.write(bytes(msg, 'ascii'))
         time.sleep(delay)  # some commands may take seconds to execute.
-        resp = ser.read(150)
-        worked = True
+
+        # Read all available lines, and return the last as the output
+        resp = ""
+        while ser.inWaiting() > 0:
+            resp = ser.readline()
+            log(resp)
+        
+        return resp
     except serial.SerialException as e:
         print("SERIAL ERROR WHILE SENDING: " + str(e))
-        resp = ''
-    log(resp)
-    return resp, worked
+        return False
 
 
 def get_args():
@@ -174,8 +177,8 @@ def taste_leveling(x, y, f=4000,  delay=2):
         move_delay(x, y, f, delay)
 
         # Get the m114 string and extract the absolute z position.
-        m114, error = send_serial("M114", 0.1)
-        if error:
+        m114 = send_serial("M114", 0.1)
+        if m114:
             zm114 = m114[m114.find(b'Z:')+2:]  # strip to the first Z
             # extract the second Z
             zzm114 = zm114[zm114.find(b'Z:')+2:zm114.find(b'\n')]
@@ -202,8 +205,8 @@ def probe_location(x, y, f=4000,  delay=2):
     log("*** Starting Probe ***")
     move_delay(x, y, f, delay, z=PROBE_HEIGHT)
 
-    res, error = send_serial("G30", PROBE_DELAY)
-    if error:
+    res = send_serial("G30", PROBE_DELAY)
+    if res:
         # handle different string config between firmware versions these pretty
         # much have to be hand crafted for each version.
         if MODERN_MARLIN:
