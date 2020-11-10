@@ -54,6 +54,8 @@ class Printer:
 
     def __init__(self, port):
         self.ser = serial.Serial(port, timeout=1)
+        time.sleep(0.05)
+        self.ser.flushInput() # Hopefully prevent's carryover from prior run.
 
     def send_serial(self, msg, delay=0.01):
         """! Sends a string over serial to the printer. 
