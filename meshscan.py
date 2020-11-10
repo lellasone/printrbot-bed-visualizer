@@ -49,7 +49,7 @@ def log(msg):
 class Printer:
 
     def __init__(self, port):
-        self.ser = serial.Serial(PRINTER_PORT, timeout=1)
+        self.ser = serial.Serial(port, timeout=1)
 
     def send_serial(self, msg, delay=0.01):
         """! Sends a string over serial to the printer. 
