@@ -16,7 +16,8 @@
         -p, port=:        sets the comport. 
         -x, x_limit=:     how large an area in x to probe over. 
         -y, y_limit=:     how large an area in y to probe over. 
-        -s, step=:        how far in each axis to move between probings. 
+        -s, step=:        how far in each axis to move between probings.
+        -d, start_delay   determins how long to wait after sending start script. 
 '''
 import sys
 import getopt
@@ -39,6 +40,9 @@ PROBE_HEIGHT = 4
 # How long to wait during a G30 operation. This is dependent on the probe height and firmware revision.
 PROBE_DELAY = 2
 MODERN_MARLIN = False
+# this really isn't going to be correct without tuning.
+STEPS_PER_UNIT_Z = 2020
+START_DELAY = 30
 
 
 def log(msg):
@@ -124,34 +128,39 @@ def get_args():
     global LEVELING
     global PROBE_DELAY
     global MODERN_MARLIN
+    global START_DELAY
     args = sys.argv[1:]
-    opts_short = "vp:b:x:y:s:lm"
-    opts_long = ["verbose", "port=", "baud=", "x_limit=", "y_limit=", "step=", "leveling", "modern_marlin"]
+    opts_short = "vp:b:x:y:s:lmd:"
+    opts_long = ["verbose", "port=", "baud=", "start_delay=",
+                 "x_limit=", "y_limit=", "step=", "leveling", "modern_marlin"]
     try:
         opts, args = getopt.getopt(args, opts_short, opts_long)
         for opt, arg in opts:
             if opt in ("-v", "verbose"):
                 VERBOSE = True
                 print("Using verbose output mode")
-            elif opt in ("-p", "port"):
+            elif opt in ("-p", "--port"):
                 PRINTER_PORT = arg
-            elif opt in ("-b", "baud="):
+            elif opt in ("-b", "--baud"):
                 BAUD_RATE = int(arg)
-            elif opt in ("-x", "x_limit="):
+            elif opt in ("-x", "--x_limit"):
                 X_LIM = int(arg)
-            elif opt in ("-y", "y_limit="):
+            elif opt in ("-y", "--y_limit"):
                 Y_LIM = int(arg)
-            elif opt in ("-s", "step="):
+            elif opt in ("-s", "--step"):
                 SPACING = int(arg)
-            elif opt in ("-l", "leveling"):
+            elif opt in ("-l", "--leveling"):
                 LEVELING = True
-            elif opt in ("-m", "modern_marlin"):
+            elif opt in ("-m", "--modern_marlin"):
                 PROBE_DELAY = 6
                 MODERN_MARLIN = True
                 print("WARNING: Marlin firmware may be unable to probe extreme "
                       "edges of the printbed. Consider reducing the x and y "
                       "dimensions of the probe area and increasing the step "
                       "size if edge saturation occurs.")
+            elif opt in ("-d", "--start_delay"):
+                START_DELAY = int(arg)
+                print("Start Delay: " + str(arg))
         log(opts)
 
     except getopt.GetoptError as e:
@@ -189,7 +198,12 @@ def taste_leveling(printer, x, y, f=4000,  delay=2):
             zm114 = m114[m114.find(b'Z:')+2:]  # strip to the first Z
             # extract the second Z
             zzm114 = zm114[zm114.find(b'Z:')+2:zm114.find(b'\n')]
-            return float(zzm114)
+
+            # Marlin returns value in steps rather then units.
+            if MODERN_MARLIN:
+                return(float(zzm114)/STEPS_PER_UNIT_Z)
+            else:
+                return(float(zzm114))
         else:
             return 0  # Not a great default, but there you go.
     else:
@@ -330,12 +344,35 @@ def display_heat(data):
     plt.show()
 
 
+def get_conversion(printer):
+    """ Get the steps per unit from the printer and record that global value. 
+    This should probobly be called after the initial startup file is sent to
+    ensure the units are correct. 
+
+    Note: something will probobly break if the printer isn't actually in mm.
+    """
+    global STEPS_PER_UNIT_Z
+    msg = printer.send_serial("M503\n", expected_len=500)
+    if msg:
+        # strip to unit conversions.
+        msg = msg[msg.find(b'Steps per unit:')+15:]
+        msg = msg[msg.find(b'Z')+1:]  # strip to z.
+        msg = msg[:msg.find(b'E')]  # remove everything after the z value.
+        log("Their are {} steps per mm on the Z axis".format(msg))
+        STEPS_PER_UNIT_Z = float(msg)
+    else:
+        print("WARNING: Unable to set steps per mm Z")
+
+
 if __name__ == "__main__":
     get_args()
+    get_conversion(printer)
     printer = Printer(PRINTER_PORT)
     printer.send_file('startup.txt')
-    time.sleep(30)
-    offset = run_probing(printer, X_LIM, Y_LIM, SPACING, leveling=True, )
+    time.sleep(START_DELAY)
+    print("Mapping Compensation Field")
+    offset = run_probing(printer, X_LIM, Y_LIM, SPACING, leveling=True)
+    print("Mapping Physical Bed Geometry")
     data = run_probing(printer, X_LIM, Y_LIM, SPACING)
     printer.send_file('shutdown.txt')
     printer.destroy()

@@ -15,7 +15,7 @@ capacitive sensor. However, I found the onboard capacitive sensor to be
 repeatable to within +- 0.25 thou, so I would stick with that unless you are 
 worried it is failing. 
 
-### installation
+### Installation
 I use ubuntu and have only somewhat tested the executable under windows. I
 recommend running the script as a python script under ubuntu, but it should
 work as an executable under windows as well. The two executables (windows and 
@@ -33,6 +33,7 @@ Clone the repo to a machine running ubuntu or windows with python 3. Then instal
 the dependencies below. 
 
 ```
+git clone git@github.com:lellasone/printrbot-bed-visualizer.git
 pip3 install matplotlib
 pip3 install numpy
 pip3 install pyserial
@@ -59,7 +60,7 @@ what exactly you want to do.
  
 __Run as a python script__
 ```
-python3 meshscan.py -v -x 150 -y 150 -s 25 -l -p /dev/ttyACM0 
+python3 meshscan.py -v -x 150 -y 150 -s 25 -l -p /dev/ttyACM0 --start_delay=30 
 ```
 
 __Run as a ubuntu executable__
@@ -67,12 +68,19 @@ __Run as a ubuntu executable__
 ./meshscan -v -x 150 -y 150 -s 25 -l -p /dev/ttyACM0
 ```
 
+__Serial Errors__
 Unless your system is very similar to mine you may need to change the port and 
 baud rate arguments. The baud rate is a product of the firmware installed on 
 your printer, and the comport is a product of the order in which devices are
 connected to your computer. Both can be found in your g-code sender. A good
 default comport for ubuntu is '/dev/ttyACM0' and a good default guess for 
 windows is 'COM0'.
+
+__M114 Read Error on Scan Start__
+Larger printers may take longer then the default time to execute their startup
+script depending on the options used. This can cause an error where the script
+begins it's scan while the printer is still leveling the bed. To deal with this
+increase the `--start_delay` argument. 
 
 #### Reading the plot
 
@@ -85,7 +93,7 @@ tend to have the nozel farther from the bed.
 
 In general, a difference of more then about .05 is probobly cause for concern. 
 
-__saturation__
+__Saturation__
 
 Saturation (large areas of the heatmap returning identical values when you know
 that not to be the case) can occur in two cases as follows:
@@ -117,6 +125,8 @@ the chart.
 | -x, x_limit                  | 150     | size of area to scan in mm. |
 | -y, y_limit                  | 150     | size of area to scan in mm. |
 | -s, step                     | 25      | linear spacing along each axis between probe locations in mm. 
+| -d, start_dela               | 30      | How long to allow the startup script for execution before begining scan.
+
 #### Start and end files 
 Place your machine's startup g-code into the startup.txt file. This will be run
 prior to the scan. Use this to run any commands (say homing or bed leveing) run
