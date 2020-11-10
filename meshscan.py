@@ -143,13 +143,13 @@ def send_file(name):
     @param name the name of the file to send.  
     """
     try:
-        start = open(name)
-        for line in start:
-            # Handle comments (sorta)
-            send = line[:line.find(';')]
-            # Send the data.
-            send_serial(send)
-        start.close()
+         with open(name) as file_contents:
+            for line in file_contents:
+                # Handle comments (sorta)
+                send = line[:line.find(';')]
+
+                if send != "":
+                    send_serial(send)
     except IOError as e:
         print("ERROR READING FILE: " + str(e))
 
