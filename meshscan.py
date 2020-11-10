@@ -36,49 +36,78 @@ SPACING = 25  # default distance between points.
 FEED = 4000
 LEVELING = False
 PROBE_HEIGHT = 4
-PROBE_DELAY = 2  # How long to wait during a G30 operation. This is dependent on the probe height and firmware revision.
+# How long to wait during a G30 operation. This is dependent on the probe height and firmware revision.
+PROBE_DELAY = 2
 MODERN_MARLIN = False
 
 
 def log(msg):
-    if VERBOSE: 
+    if VERBOSE:
         print(msg)
-    
 
-def send_serial(msg, delay=0.01):
-    """! Sends a string over serial to the printer. 
-    This function connects to the robot, sends the specified string, and then 
-    disconnects from the printer. Note that comport exceptions are caught and 
-    displayed without stopping the program. That means commands may be missed!
 
-    Note: PRINTER_PORT must be set to the correct comport prior to calling this
-          function. Otherwise it really won't do much of anything. 
-    @param msg string to send to 3D printer.
-    @pram delay time to wait (in seconds) between sending a message and reading
-                the reply. The default is fine for settings or move commands,
-                but may be too short for quiries that involve movement.
-    @returns the serial responce if any and a bool to indicate if an error
-             occured while executing. 
-    """
-    log("sending: " + msg)
-    try:
-        if not msg.endswith('\n'):
-            msg = msg + '\n'
+class Printer:
 
-        ser = serial.Serial(PRINTER_PORT, timeout=1)
-        ser.write(bytes(msg, 'ascii'))
-        time.sleep(delay)  # some commands may take seconds to execute.
+    def __init__(self, port):
+        self.ser = serial.Serial(PRINTER_PORT, timeout=1)
 
-        # Read all available lines, and return the last as the output
-        resp = ""
-        while ser.inWaiting() > 0:
-            resp = ser.readline()
-            log(resp)
-        
-        return resp
-    except serial.SerialException as e:
-        print("SERIAL ERROR WHILE SENDING: " + str(e))
-        return False
+    def send_serial(self, msg, delay=0.01):
+        """! Sends a string over serial to the printer. 
+        This function connects to the robot, sends the specified string, and then 
+        disconnects from the printer. Note that comport exceptions are caught and 
+        displayed without stopping the program. That means commands may be missed!
+
+        Note: PRINTER_PORT must be set to the correct comport prior to calling this
+            function. Otherwise it really won't do much of anything. 
+        @param msg string to send to 3D printer.
+        @pram delay time to wait (in seconds) between sending a message and reading
+                    the reply. The default is fine for settings or move commands,
+                    but may be too short for quiries that involve movement.
+        @returns the serial responce if any and a bool to indicate if an error
+                occured while executing. 
+        """
+        log("sending: " + msg)
+        try:
+            if not msg.endswith('\n'):
+                msg = msg + '\n'
+
+            self.ser.write(bytes(msg, 'ascii'))
+            time.sleep(delay)  # some commands may take seconds to execute.
+
+            # Read all available lines, and return the last as the output
+            resp = ""
+            while self.ser.inWaiting() > 0:
+                resp = self.ser.readline()
+                log(resp)
+
+            return resp
+        except serial.SerialException as e:
+            print("SERIAL ERROR WHILE SENDING: " + str(e))
+            return False
+
+    def send_file(self, name):
+        """! Send the commands in the specified file.
+        This function sends a block of g-code without delay between commands. This 
+        is useful for things like sending startup or shutdown commands but may not
+        be suitable for more complex tasks like sending actual operatinal code. 
+
+        It's a tossup whether this catches comments and blank space correctly.
+
+        @param name the name of the file to send.  
+        """
+        try:
+            with open(name) as file_contents:
+                for line in file_contents:
+                    # Handle comments (sorta)
+                    send = line[:line.find(';')]
+
+                    if send != "":
+                        self.send_serial(send)
+        except IOError as e:
+            print("ERROR READING FILE: " + str(e))
+
+    def destroy(self):
+        self.ser.close()
 
 
 def get_args():
@@ -120,9 +149,9 @@ def get_args():
                 PROBE_DELAY = 6
                 MODERN_MARLIN = True
                 print("WARNING: Marlin firmware may be unable to probe extreme "
-                       "edges of the printbed. Consider reducing the x and y "
-                       "dimensions of the probe area and increasing the step "
-                       "size if edge saturation occurs.")
+                      "edges of the printbed. Consider reducing the x and y "
+                      "dimensions of the probe area and increasing the step "
+                      "size if edge saturation occurs.")
         log(opts)
 
     except getopt.GetoptError as e:
@@ -132,29 +161,7 @@ def get_args():
         quit()
 
 
-def send_file(name):
-    """! Send the commands in the specified file.
-    This function sends a block of g-code without delay between commands. This 
-    is useful for things like sending startup or shutdown commands but may not
-    be suitable for more complex tasks like sending actual operatinal code. 
-
-    It's a tossup whether this catches comments and blank space correctly.
-
-    @param name the name of the file to send.  
-    """
-    try:
-         with open(name) as file_contents:
-            for line in file_contents:
-                # Handle comments (sorta)
-                send = line[:line.find(';')]
-
-                if send != "":
-                    send_serial(send)
-    except IOError as e:
-        print("ERROR READING FILE: " + str(e))
-
-
-def taste_leveling(x, y, f=4000,  delay=2):
+def taste_leveling(printer, x, y, f=4000,  delay=2):
     """! This function returns the current amount of leveling compensation.  
     This is useful for building up a scan of the offset applied by the printer
     to it's actual coordinates during printing. Note that calling G30 will 
@@ -174,10 +181,10 @@ def taste_leveling(x, y, f=4000,  delay=2):
     """
     if LEVELING:
         log("*** Starting Taste ***")
-        move_delay(x, y, f, delay)
+        move_delay(printer, x, y, f, delay)
 
         # Get the m114 string and extract the absolute z position.
-        m114 = send_serial("M114", 0.1)
+        m114 = printer.send_serial("M114", 0.1)
         if m114:
             zm114 = m114[m114.find(b'Z:')+2:]  # strip to the first Z
             # extract the second Z
@@ -189,7 +196,7 @@ def taste_leveling(x, y, f=4000,  delay=2):
         return 0  # create an empty offset map.
 
 
-def probe_location(x, y, f=4000,  delay=2):
+def probe_location(printer, x, y, f=4000,  delay=2):
     """! Move the print head to the specified location and probe bed height.
     This function moves the print head to the specified location in absolute
     coordinates without altering the z-height. It then probes the bed height
@@ -203,9 +210,9 @@ def probe_location(x, y, f=4000,  delay=2):
     @returns z height at which bed was detected.
     """
     log("*** Starting Probe ***")
-    move_delay(x, y, f, delay, z=PROBE_HEIGHT)
+    move_delay(printer, x, y, f, delay, z=PROBE_HEIGHT)
 
-    res = send_serial("G30", PROBE_DELAY)
+    res = printer.send_serial("G30", PROBE_DELAY)
     if res:
         # handle different string config between firmware versions these pretty
         # much have to be hand crafted for each version.
@@ -227,7 +234,7 @@ def probe_location(x, y, f=4000,  delay=2):
         return 0  # Not a great default, but there you go.
 
 
-def move_delay(x, y, f, delay, z=0):
+def move_delay(printer, x, y, f, delay, z=0):
     """! Makes an absolute move to a position and then waits the delay.
     This function wrapps a G0 command with a delay command. It is useful
     for general purpose moves. A G90 command is used to set the coordinates
@@ -238,12 +245,12 @@ def move_delay(x, y, f, delay, z=0):
     @param delay how long to wait in seconds. 
     """
     # Set to absolute coordinates.
-    send_serial("G90")
+    printer.send_serial("G90")
     # move to position.
-    send_serial("G0  F{} X{} Y{} Z{}".format(f, x, y, z), delay)
+    printer.send_serial("G0  F{} X{} Y{} Z{}".format(f, x, y, z), delay)
 
 
-def run_probing(lim_x, lim_y, spacing, leveling=False):
+def run_probing(printer, lim_x, lim_y, spacing, leveling=False):
     """! Main testing loop of the program, this executes probes each location.
     Executes a printer height probe at each location specified by the operating
     area and spacing paramiter. This function can also be used to get the
@@ -258,7 +265,7 @@ def run_probing(lim_x, lim_y, spacing, leveling=False):
     log("run probing")
 
     values = []  # Move to zero zero before starting.
-    move_delay(0, 0, FEED, 120*np.sqrt(lim_x**2 + lim_y**2)/FEED)
+    move_delay(printer, 0, 0, FEED, 120*np.sqrt(lim_x**2 + lim_y**2)/FEED)
 
     offset = spacing/2  # probe in the center of each square
     for i in range(0, lim_x, spacing):
@@ -271,12 +278,14 @@ def run_probing(lim_x, lim_y, spacing, leveling=False):
                 delay = 120*spacing/FEED
 
             if leveling:
-                row.append(taste_leveling(i+offset,
+                row.append(taste_leveling(printer,
+                                          i+offset,
                                           j+offset,
                                           f=FEED,
                                           delay=delay))
             else:
-                row.append(probe_location(i+offset,
+                row.append(probe_location(printer,
+                                          i+offset,
                                           j+offset,
                                           f=FEED,
                                           delay=delay))
@@ -323,9 +332,11 @@ def display_heat(data):
 
 if __name__ == "__main__":
     get_args()
-    send_file('startup.txt')
+    printer = Printer(PRINTER_PORT)
+    printer.send_file('startup.txt')
     time.sleep(30)
-    offset = run_probing(X_LIM, Y_LIM, SPACING, leveling=True)
-    data = run_probing(X_LIM, Y_LIM, SPACING)
-    send_file('shutdown.txt')
+    offset = run_probing(printer, X_LIM, Y_LIM, SPACING, leveling=True, )
+    data = run_probing(printer, X_LIM, Y_LIM, SPACING)
+    printer.send_file('shutdown.txt')
+    printer.destroy()
     display_heat(np.array(data)-np.array(offset))
