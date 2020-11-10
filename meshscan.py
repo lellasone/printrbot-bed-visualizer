@@ -78,12 +78,12 @@ class Printer:
             self.ser.write(bytes(msg, 'ascii'))
             time.sleep(delay)  # some commands may take seconds to execute.
 
-            # Read all available lines, and return the last as the output
+            # Read all available lines, and return the total
             resp = ""
             while self.ser.inWaiting() > 0:
-                resp = self.ser.readline()
-                log(resp)
-
+                resp += self.ser.readline()
+            
+            log(resp)
             return resp
         except serial.SerialException as e:
             print("SERIAL ERROR WHILE SENDING: " + str(e))
@@ -352,7 +352,7 @@ def get_conversion(printer):
     Note: something will probobly break if the printer isn't actually in mm.
     """
     global STEPS_PER_UNIT_Z
-    msg = printer.send_serial("M503\n", expected_len=500)
+    msg = printer.send_serial("M503")
     if msg:
         # strip to unit conversions.
         msg = msg[msg.find(b'Steps per unit:')+15:]
@@ -366,8 +366,8 @@ def get_conversion(printer):
 
 if __name__ == "__main__":
     get_args()
-    get_conversion(printer)
     printer = Printer(PRINTER_PORT)
+    get_conversion(printer)
     printer.send_file('startup.txt')
     time.sleep(START_DELAY)
     print("Mapping Compensation Field")
