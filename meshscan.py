@@ -30,8 +30,8 @@ import matplotlib.pyplot as plt
 VERBOSE = False
 PRINTER_PORT = '/dev/ttyACM0'  # A reasonable default.
 BAUD_RATE = 250000
-X_LIM = 150  # default x size in pritner units (ussually mm)
-Y_LIM = 150  # default y size in printer units (ussually mm)
+X_LIM = 150  # default x size in pritner units (usually mm)
+Y_LIM = 150  # default y size in printer units (usually mm)
 SPACING = 25  # default distance between points.
 FEED = 4000
 LEVELING = False
@@ -72,7 +72,7 @@ def send_serial(msg, delay=0.01):
         resp = ser.read(150)
         worked = True
     except serial.SerialException as e:
-        print("SERIAL ERROR WHILE SENDIGN: " + str(e))
+        print("SERIAL ERROR WHILE SENDING: " + str(e))
         resp = ''
     log(resp)
     return resp, worked
