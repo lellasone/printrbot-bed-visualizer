@@ -81,7 +81,10 @@ class Printer:
             # Read all available lines, and return the total
             resp = ""
             while self.ser.inWaiting() > 0:
-                resp += self.ser.readline()
+                line = self.ser.readline().decode("utf-8")
+                log(line)
+                if line != "echo:busy: processing":
+                    resp += line
             
             log(resp)
             return resp
@@ -195,15 +198,14 @@ def taste_leveling(printer, x, y, f=4000,  delay=2):
         # Get the m114 string and extract the absolute z position.
         m114 = printer.send_serial("M114", 0.1)
         if m114:
-            zm114 = m114[m114.find(b'Z:')+2:]  # strip to the first Z
-            # extract the second Z
-            zzm114 = zm114[zm114.find(b'Z:')+2:zm114.find(b'\n')]
+            idx = m114.rfind('Z:') + 2
+            zm114 = m114[idx:m114.find('\n', idx)]
 
             # Marlin returns value in steps rather then units.
             if MODERN_MARLIN:
-                return(float(zzm114)/STEPS_PER_UNIT_Z)
+                return(float(zm114)/STEPS_PER_UNIT_Z)
             else:
-                return(float(zzm114))
+                return(float(zm114))
         else:
             return 0  # Not a great default, but there you go.
     else:
@@ -236,13 +238,13 @@ def probe_location(printer, x, y, f=4000,  delay=2):
                 print("WARNING: Unable to probe this location, setting height 0")
                 val = 0
             else:
-                res = res[res.find(b'Z:') + 2:]
-                end = res.find(b'\n')
+                res = res[res.find('Z:') + 2:]
+                end = res.find('\n')
                 val = float(res[:end])
         else:
-            temp = res.find(b'endstops')
+            temp = res.find('endstops')
             res = res[temp:]
-            val = float(res[res.find(b'Z:')+2:])
+            val = float(res[res.find('Z:')+2:])
         return val
     else:
         return 0  # Not a great default, but there you go.
@@ -355,10 +357,10 @@ def get_conversion(printer):
     msg = printer.send_serial("M503")
     if msg:
         # strip to unit conversions.
-        msg = msg[msg.find(b'Steps per unit:')+15:]
-        msg = msg[msg.find(b'Z')+1:]  # strip to z.
-        msg = msg[:msg.find(b'E')]  # remove everything after the z value.
-        log("Their are {} steps per mm on the Z axis".format(msg))
+        msg = msg[msg.find('Steps per unit:')+15:]
+        msg = msg[msg.find('Z')+1:]  # strip to z.
+        msg = msg[:msg.find('E')]  # remove everything after the z value.
+        log("There are {} steps per mm on the Z axis".format(msg))
         STEPS_PER_UNIT_Z = float(msg)
     else:
         print("WARNING: Unable to set steps per mm Z")
